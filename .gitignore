@@ -12,6 +12,8 @@ backend/.idea
 backend/target
 backend/HELP.md
 
+backend/src/main/resources/application.properties
+
 
 # Frontend
 frontend/node_modules
