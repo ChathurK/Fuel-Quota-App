@@ -205,7 +205,7 @@ const StationRegistration = () => {
           <TextField
             fullWidth
             label="Business Registration Number"
-            placeholder="e.g., SX-XXX-0000"
+            placeholder="e.g., SR-XXX-0000"
             value={formData.registrationNumber}
             onChange={handleInputChange('registrationNumber')}
             error={!!errors.registrationNumber}
