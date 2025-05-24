@@ -1,7 +1,24 @@
-# IDEs
+# Root directory
 .idea
 .vscode
 
 # Other files
 fuel_quota_management_system.pdf
 test_login.json
+
+
+# Backend
+backend/.idea
+backend/target
+backend/HELP.md
+
+
+# Frontend
+frontend/node_modules
+# Frontend production
+frontend/build
+
+
+# Fuel Quota App
+fuel-station-app/.expo
+fuel-station-app/node_modules
