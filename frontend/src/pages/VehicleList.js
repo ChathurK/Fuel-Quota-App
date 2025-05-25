@@ -218,15 +218,7 @@ const VehicleList = () => {
             </Button>
             
             <Box>
-              <Tooltip title="View quota details">
-                <IconButton 
-                  size="small" 
-                  onClick={() => handleViewQuota(vehicle.id)}
-                  disabled={!quota}
-                >
-                  <InfoIcon />
-                </IconButton>
-              </Tooltip>
+              
               
               <Tooltip title="Transaction history">
                 <IconButton 

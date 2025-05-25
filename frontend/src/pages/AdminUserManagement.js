@@ -22,14 +22,6 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
   IconButton,
   Tooltip,
   Avatar,
@@ -37,19 +29,15 @@ import {
 } from '@mui/material';
 import {
   People as PeopleIcon,
-  Edit as EditIcon,
-  Block as BlockIcon,
-  CheckCircle as ActivateIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
-  PersonAdd as PersonAddIcon,
   AdminPanelSettings as AdminIcon,
   DirectionsCar as VehicleOwnerIcon,
   LocalGasStation as StationOwnerIcon
 } from '@mui/icons-material';
 import { AdminService } from '../services/ApiService';
 import NotificationService from '../services/NotificationService';
-import { DateUtils, FormatUtils } from '../utils';
+import { DateUtils } from '../utils';
 
 const AdminUserManagement = () => {
   // State management
@@ -60,15 +48,6 @@ const AdminUserManagement = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
-  // Dialog states
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [editRoles, setEditRoles] = useState({
-    ROLE_ADMIN: false,
-    ROLE_STATION_OWNER: false,
-    ROLE_VEHICLE_OWNER: false
-  });
 
   // Statistics
   const [userStats, setUserStats] = useState({
@@ -132,52 +111,11 @@ const AdminUserManagement = () => {
     setFilteredUsers(filtered);
   };
 
-  const handleEditRoles = (user) => {
-    setSelectedUser(user);
-    setEditRoles({
-      ROLE_ADMIN: user.roles.includes('ROLE_ADMIN'),
-      ROLE_STATION_OWNER: user.roles.includes('ROLE_STATION_OWNER'),
-      ROLE_VEHICLE_OWNER: user.roles.includes('ROLE_VEHICLE_OWNER')
-    });
-    setEditDialogOpen(true);
-  };
-
-  const handleSaveRoles = async () => {
-    try {
-      const selectedRoles = Object.keys(editRoles).filter(role => editRoles[role]);
-      
-      await AdminService.updateUserRoles(selectedUser.id, selectedRoles);
-      NotificationService.success('User roles updated successfully!');
-      
-      setEditDialogOpen(false);
-      loadUsers(); // Reload users
-    } catch (error) {
-      NotificationService.error('Failed to update user roles');
-    }
-  };
-
-  const handleToggleUserStatus = async (userId, currentStatus) => {
-    try {
-      await AdminService.updateUserStatus(userId, !currentStatus);
-      NotificationService.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
-      loadUsers(); // Reload users
-    } catch (error) {
-      NotificationService.error('Failed to update user status');
-    }
-  };
-
   const getRoleIcon = (roles) => {
     if (roles.includes('ROLE_ADMIN')) return <AdminIcon sx={{ fontSize: 16 }} />;
     if (roles.includes('ROLE_STATION_OWNER')) return <StationOwnerIcon sx={{ fontSize: 16 }} />;
     if (roles.includes('ROLE_VEHICLE_OWNER')) return <VehicleOwnerIcon sx={{ fontSize: 16 }} />;
     return null;
-  };
-
-  const getPrimaryRole = (roles) => {
-    if (roles.includes('ROLE_ADMIN')) return 'Admin';
-    if (roles.includes('ROLE_STATION_OWNER')) return 'Station Owner';
-    if (roles.includes('ROLE_VEHICLE_OWNER')) return 'Vehicle Owner';
-    return 'User';
   };
 
   const handleChangePage = (event, newPage) => {
@@ -209,7 +147,7 @@ const AdminUserManagement = () => {
             User Management
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Manage user accounts, roles, and permissions
+            View and monitor user accounts and roles
           </Typography>
         </Box>
         <Tooltip title="Refresh Users">
@@ -358,7 +296,6 @@ const AdminUserManagement = () => {
                 <TableCell>Roles</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Joined</TableCell>
-                <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -422,30 +359,6 @@ const AdminUserManagement = () => {
                       {user.createdAt ? DateUtils.formatTimestamp(user.createdAt) : 'N/A'}
                     </Typography>
                   </TableCell>
-                  
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="Edit Roles">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditRoles(user)}
-                          color="primary"
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      
-                      <Tooltip title={user.isActive ? 'Deactivate User' : 'Activate User'}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleToggleUserStatus(user.id, user.isActive)}
-                          color={user.isActive ? 'error' : 'success'}
-                        >
-                          {user.isActive ? <BlockIcon fontSize="small" /> : <ActivateIcon fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -462,82 +375,6 @@ const AdminUserManagement = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
-
-      {/* Edit Roles Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Edit User Roles - {selectedUser?.username}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Select the roles for this user:
-            </Typography>
-            
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={editRoles.ROLE_ADMIN}
-                    onChange={(e) => setEditRoles(prev => ({ ...prev, ROLE_ADMIN: e.target.checked }))}
-                    color="error"
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <AdminIcon sx={{ mr: 1, fontSize: 16 }} />
-                    Administrator
-                  </Box>
-                }
-              />
-              
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={editRoles.ROLE_STATION_OWNER}
-                    onChange={(e) => setEditRoles(prev => ({ ...prev, ROLE_STATION_OWNER: e.target.checked }))}
-                    color="success"
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <StationOwnerIcon sx={{ mr: 1, fontSize: 16 }} />
-                    Station Owner
-                  </Box>
-                }
-              />
-              
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={editRoles.ROLE_VEHICLE_OWNER}
-                    onChange={(e) => setEditRoles(prev => ({ ...prev, ROLE_VEHICLE_OWNER: e.target.checked }))}
-                    color="info"
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <VehicleOwnerIcon sx={{ mr: 1, fontSize: 16 }} />
-                    Vehicle Owner
-                  </Box>
-                }
-              />
-            </FormGroup>
-
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              Be careful when modifying admin roles. Ensure at least one admin user remains active.
-            </Alert>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveRoles} variant="contained">
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

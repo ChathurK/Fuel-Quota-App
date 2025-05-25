@@ -279,7 +279,7 @@ const StationRegistration = () => {
                     color="success"
                   />
                 }
-                label="Petrol (95 Octane)"
+                label="Petrol"
               />
               <FormControlLabel
                 control={

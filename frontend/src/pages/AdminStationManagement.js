@@ -22,7 +22,6 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -41,9 +40,6 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Visibility as ViewIcon,
-  Edit as EditIcon,
-  ToggleOn as ActivateIcon,
-  ToggleOff as DeactivateIcon,
   LocationOn as LocationIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
@@ -52,7 +48,7 @@ import {
 } from '@mui/icons-material';
 import { FuelStationService } from '../services/ApiService';
 import NotificationService from '../services/NotificationService';
-import { DateUtils, FormatUtils } from '../utils';
+import { DateUtils } from '../utils';
 
 const AdminStationManagement = () => {
   // State management
@@ -152,16 +148,6 @@ const AdminStationManagement = () => {
     setDetailsDialogOpen(true);
   };
 
-  const handleToggleStationStatus = async (stationId, currentStatus) => {
-    try {
-      await FuelStationService.updateStationStatus(stationId, !currentStatus);
-      NotificationService.success(`Station ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
-      loadStations(); // Reload stations
-    } catch (error) {
-      NotificationService.error('Failed to update station status');
-    }
-  };
-
   const getStatusColor = (isActive) => {
     return isActive ? 'success' : 'error';
   };
@@ -199,7 +185,7 @@ const AdminStationManagement = () => {
             Station Management
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Monitor and manage fuel stations across the system
+            Monitor and view fuel stations across the system
           </Typography>
         </Box>
         <Tooltip title="Refresh Stations">
@@ -403,7 +389,6 @@ const AdminStationManagement = () => {
                 <TableCell>Location</TableCell>
                 <TableCell>Fuel Types</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Registered</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -470,34 +455,16 @@ const AdminStationManagement = () => {
                     />
                   </TableCell>
                   
-                  <TableCell>
-                    <Typography variant="body2">
-                      {station.createdAt ? DateUtils.formatTimestamp(station.createdAt) : 'N/A'}
-                    </Typography>
-                  </TableCell>
-                  
                   <TableCell align="center">
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="View Details">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewDetails(station)}
-                          color="primary"
-                        >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      
-                      <Tooltip title={station.isActive ? 'Deactivate' : 'Activate'}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleToggleStationStatus(station.id, station.isActive)}
-                          color={station.isActive ? 'error' : 'success'}
-                        >
-                          {station.isActive ? <DeactivateIcon fontSize="small" /> : <ActivateIcon fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+                    <Tooltip title="View Details">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewDetails(station)}
+                        color="primary"
+                      >
+                        <ViewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -694,24 +661,15 @@ const AdminStationManagement = () => {
                 </Box>
               </Grid>
 
-              {/* Registration Information */}
+              {/* Status Information */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Registration Information
+                  Status Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Registration Date
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {selectedStation.createdAt ? DateUtils.formatTimestamp(selectedStation.createdAt) : 'N/A'}
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary">
                   Current Status
                 </Typography>
@@ -721,42 +679,6 @@ const AdminStationManagement = () => {
                     color={getStatusColor(selectedStation.isActive)}
                     icon={getStatusIcon(selectedStation.isActive)}
                   />
-                </Box>
-              </Grid>
-
-              {/* Quick Actions */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Quick Actions
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button
-                    variant={selectedStation.isActive ? "outlined" : "contained"}
-                    color={selectedStation.isActive ? "error" : "success"}
-                    onClick={() => {
-                      handleToggleStationStatus(selectedStation.id, selectedStation.isActive);
-                      setDetailsDialogOpen(false);
-                    }}
-                    startIcon={selectedStation.isActive ? <DeactivateIcon /> : <ActivateIcon />}
-                  >
-                    {selectedStation.isActive ? 'Deactivate Station' : 'Activate Station'}
-                  </Button>
-                  
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => {
-                      // Navigate to station dashboard with this station's data
-                      window.open(`/station/${selectedStation.id}/dashboard`, '_blank');
-                    }}
-                    startIcon={<BusinessIcon />}
-                  >
-                    View Dashboard
-                  </Button>
                 </Box>
               </Grid>
             </Grid>

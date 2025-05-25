@@ -239,14 +239,7 @@ const StationList = () => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Analytics">
-              <IconButton
-                size="small"
-                onClick={() => handleViewAnalytics(station.id)}
-              >
-                <AnalyticsIcon />
-              </IconButton>
-            </Tooltip>
+            
           </Box>
         </CardActions>
       </Card>
