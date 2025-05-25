@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Use your computer's actual IP address
+// Actual IP address of the pc where the backend server is running
 export const API_BASE_URL = 'http://192.168.8.111:8080/api';
 
 // Create axios instance with base configuration

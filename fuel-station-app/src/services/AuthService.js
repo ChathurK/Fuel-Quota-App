@@ -3,7 +3,6 @@ import ApiService from './ApiService';
 
 // Get the API_BASE_URL from ApiService
 const getApiBaseUrl = () => {
-  // We'll access this from ApiService or define it here
   return 'http://192.168.8.111:8080/api';
 };
 

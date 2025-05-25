@@ -24,4 +24,5 @@ frontend/build
 
 # Fuel Quota App
 fuel-station-app/.expo
+fuel-station-app/%ProgramData%
 fuel-station-app/node_modules
