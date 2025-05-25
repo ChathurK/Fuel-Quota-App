@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import ApiService from '../services/ApiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Colors } from '../constants/Colors';
 
 const FuelTransactionScreen = ({ route, navigation }) => {
   const { vehicleData, qrCode } = route.params;
@@ -20,6 +22,7 @@ const FuelTransactionScreen = ({ route, navigation }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transactionData, setTransactionData] = useState(null);
+
   useEffect(() => {
     // Set the navigation title to include vehicle number
     navigation.setOptions({
@@ -45,6 +48,7 @@ const FuelTransactionScreen = ({ route, navigation }) => {
 
     return true;
   };
+
   const handleProcessTransaction = () => {
     if (!validateLiters()) return;
 
@@ -62,6 +66,7 @@ const FuelTransactionScreen = ({ route, navigation }) => {
 
     setShowConfirmModal(true);
   };
+
   const confirmTransaction = async () => {
     setIsProcessing(true);
     setShowConfirmModal(false);
@@ -117,91 +122,120 @@ const FuelTransactionScreen = ({ route, navigation }) => {
       setIsProcessing(false);
     }
   };
+
   const quickAmountButtons = [5, 10, 20, 30];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={true}>
       {/* Vehicle Information Card */}
       <View style={styles.vehicleCard}>
-        <LinearGradient colors={['#4CAF50', '#45A049']} style={styles.vehicleHeader}>
-          <Text style={styles.carIcon}>🚗</Text>
-          <Text style={styles.vehicleNumber}>{vehicleData.registrationNumber}</Text>
+        <LinearGradient colors={Colors.gradients.success} style={styles.vehicleHeader}>
+          <View style={styles.vehicleHeaderIcon}>
+            <MaterialIcons name="directions-car" size={32} color={Colors.textWhite} />
+          </View>
+          <View style={styles.vehicleHeaderText}>
+            <Text style={styles.vehicleHeaderLabel}>Registration Number</Text>
+            <Text style={styles.vehicleNumber}>{vehicleData.registrationNumber}</Text>
+          </View>
+          <View style={styles.quotaBadge}>
+            <Text style={styles.quotaBadgeText}>{vehicleData.remainingQuota}L</Text>
+            <Text style={styles.quotaBadgeLabel}>Available</Text>
+          </View>
         </LinearGradient>
+
         <View style={styles.vehicleDetails}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>👤</Text>
-            <Text style={styles.detailLabel}>Owner:</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialIcons name="person" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.detailLabel}>Owner</Text>
             <Text style={styles.detailValue}>{vehicleData.ownerName}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📞</Text>
-            <Text style={styles.detailLabel}>Phone:</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialIcons name="phone" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.detailLabel}>Contact</Text>
             <Text style={styles.detailValue}>{vehicleData.ownerPhone}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>🚗</Text>
-            <Text style={styles.detailLabel}>Vehicle Type:</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialIcons name="directions-car" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.detailLabel}>Vehicle Type</Text>
             <Text style={styles.detailValue}>{vehicleData.vehicleType}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>⛽</Text>
-            <Text style={styles.detailLabel}>Fuel Type:</Text>
-            <Text style={styles.detailValue}>{vehicleData.fuelType}</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialIcons name="local-gas-station" size={18} color={Colors.secondary} />
+            </View>
+            <Text style={styles.detailLabel}>Fuel Type</Text>
+            <Text style={[styles.detailValue, styles.fuelTypeValue]}>{vehicleData.fuelType}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📊</Text>
-            <Text style={styles.detailLabel}>Remaining Quota:</Text>
-            <Text style={[styles.detailValue, styles.quotaValue]}>
-              {vehicleData.remainingQuota}L
-            </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>🚙</Text>
-            <Text style={styles.detailLabel}>Vehicle Type:</Text>
-            <Text style={styles.detailValue}>{vehicleData.vehicleType}</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialIcons name="account-balance" size={18} color={Colors.accent} />
+            </View>
+            <Text style={styles.detailLabel}>Remaining Quota</Text>
+            <Text style={[styles.detailValue, styles.quotaValue]}>{vehicleData.remainingQuota}L</Text>
           </View>
         </View>
       </View>
 
       {/* Fuel Dispensing Section */}
       <View style={styles.dispensingCard}>
-        <Text style={styles.sectionTitle}>Fuel Dispensing</Text>
+        <View style={styles.sectionHeader}>
+          <MaterialIcons name="local-gas-station" size={24} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>Fuel Dispensing</Text>
+        </View>
 
         {/* Quick Amount Buttons */}
         <View style={styles.quickAmountContainer}>
-          <Text style={styles.quickAmountLabel}>Quick Amount (Liters):</Text>
+          <Text style={styles.quickAmountLabel}>Quick Selection (Liters)</Text>
           <View style={styles.quickAmountButtons}>
             {quickAmountButtons.map((amount) => (
               <TouchableOpacity
                 key={amount}
-                style={styles.quickAmountButton}
+                style={[
+                  styles.quickAmountButton,
+                  litersToDispense === amount.toString() && styles.quickAmountButtonSelected
+                ]}
                 onPress={() => setLitersToDispense(amount.toString())}
+                activeOpacity={0.7}
               >
-                <Text style={styles.quickAmountButtonText}>{amount}L</Text>
+                <Text style={[
+                  styles.quickAmountButtonText,
+                  litersToDispense === amount.toString() && styles.quickAmountButtonTextSelected
+                ]}>
+                  {amount}L
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         {/* Manual Input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Enter Liters to Dispense:</Text>
-          <TextInput
-            style={styles.literInput}
-            value={litersToDispense}
-            onChangeText={setLitersToDispense}
-            placeholder="0.00"
-            keyboardType="decimal-pad"
-            maxLength={6}
-          />
-          <Text style={styles.inputUnit}>Liters</Text>
+        <View style={styles.inputSection}>
+          <Text style={styles.inputSectionTitle}>Custom Amount</Text>
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.literInput}
+                value={litersToDispense}
+                onChangeText={setLitersToDispense}
+                placeholder="0.00"
+                placeholderTextColor={Colors.placeholder}
+                keyboardType="decimal-pad"
+                maxLength={3}
+              />
+              <Text style={styles.inputUnit}>Liters</Text>
+            </View>
+          </View>
         </View>
-        {/* Price Calculation - removed for simplicity */}
 
         {/* Process Button */}
         <TouchableOpacity
@@ -211,12 +245,20 @@ const FuelTransactionScreen = ({ route, navigation }) => {
           ]}
           onPress={handleProcessTransaction}
           disabled={!litersToDispense || isProcessing}
+          activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF5722']}
+            colors={(!litersToDispense || isProcessing) ? 
+              [Colors.textLight, Colors.textLight] : 
+              ['#FF6B35', '#FF5722']
+            }
             style={styles.processButtonGradient}
           >
-            <Text style={styles.processIcon}>⚡</Text>
+            <MaterialIcons 
+              name="local-gas-station" 
+              size={24} 
+              color={Colors.textWhite} 
+            />
             <Text style={styles.processButtonText}>Process Transaction</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -231,22 +273,36 @@ const FuelTransactionScreen = ({ route, navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Fuel Transaction</Text>
+            <View style={styles.modalHeader}>
+              <MaterialIcons name="receipt" size={32} color={Colors.primary} />
+              <Text style={styles.modalTitle}>Confirm Transaction</Text>
+            </View>
 
             {transactionData && (
               <View style={styles.confirmationDetails}>
-                <Text style={styles.confirmationText}>
-                  Vehicle: {transactionData.vehicleNumber}
-                </Text>
-                <Text style={styles.confirmationText}>
-                  Fuel Type: {transactionData.fuelType}
-                </Text>
-                <Text style={styles.confirmationText}>
-                  Amount: {transactionData.liters}L
-                </Text>
-                <Text style={styles.confirmationText}>
-                  Remaining Quota: {transactionData.remainingQuota}L
-                </Text>
+                <View style={styles.confirmationRow}>
+                  <MaterialIcons name="directions-car" size={20} color={Colors.textSecondary} />
+                  <Text style={styles.confirmationLabel}>Vehicle:</Text>
+                  <Text style={styles.confirmationValue}>{transactionData.vehicleNumber}</Text>
+                </View>
+                
+                <View style={styles.confirmationRow}>
+                  <MaterialIcons name="local-gas-station" size={20} color={Colors.textSecondary} />
+                  <Text style={styles.confirmationLabel}>Fuel Type:</Text>
+                  <Text style={styles.confirmationValue}>{transactionData.fuelType}</Text>
+                </View>
+                
+                <View style={styles.confirmationRow}>
+                  <MaterialIcons name="opacity" size={20} color={Colors.textSecondary} />
+                  <Text style={styles.confirmationLabel}>Amount:</Text>
+                  <Text style={[styles.confirmationValue, styles.amountValue]}>{transactionData.liters}L</Text>
+                </View>
+                
+                <View style={styles.confirmationRow}>
+                  <MaterialIcons name="account-balance" size={20} color={Colors.textSecondary} />
+                  <Text style={styles.confirmationLabel}>Remaining:</Text>
+                  <Text style={[styles.confirmationValue, styles.remainingValue]}>{transactionData.remainingQuota}L</Text>
+                </View>
               </View>
             )}
 
@@ -254,14 +310,24 @@ const FuelTransactionScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={styles.modalCancelButton}
                 onPress={() => setShowConfirmModal(false)}
+                activeOpacity={0.7}
               >
+                <MaterialIcons name="close" size={20} color={Colors.textSecondary} />
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
+              
               <TouchableOpacity
                 style={styles.modalConfirmButton}
                 onPress={confirmTransaction}
+                activeOpacity={0.8}
               >
-                <Text style={styles.modalConfirmText}>Confirm</Text>
+                <LinearGradient
+                  colors={Colors.gradients.success}
+                  style={styles.modalConfirmGradient}
+                >
+                  <MaterialIcons name="check" size={20} color={Colors.textWhite} />
+                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -269,11 +335,12 @@ const FuelTransactionScreen = ({ route, navigation }) => {
       </Modal>
 
       {/* Processing Modal */}
-      <Modal visible={isProcessing} transparent={true}>
+      <Modal visible={false} transparent={true}>
         <View style={styles.processingOverlay}>
           <View style={styles.processingContent}>
-            <ActivityIndicator size="large" color="#2196F3" />
+            <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.processingText}>Processing Transaction...</Text>
+            <Text style={styles.processingSubtext}>Please wait until fuel transaction gets completed</Text>
           </View>
         </View>
       </Modal>
@@ -284,274 +351,345 @@ const FuelTransactionScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background,
   },
   vehicleCard: {
     margin: 20,
-    backgroundColor: '#fff',
-    borderRadius: 15,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   vehicleHeader: {
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  vehicleHeaderIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  vehicleHeaderText: {
+    flex: 1,
+  },
+  vehicleHeaderLabel: {
+    color: Colors.textWhite,
+    fontSize: 14,
+    opacity: 0.9,
+    fontWeight: '500',
+  },
   vehicleNumber: {
-    color: '#fff',
-    fontSize: 24,
+    color: Colors.textWhite,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginLeft: 15,
+    marginTop: 2,
+  },
+  quotaBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quotaBadgeText: {
+    color: Colors.textWhite,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  quotaBadgeLabel: {
+    color: Colors.textWhite,
+    fontSize: 10,
+    opacity: 0.9,
+    marginTop: 2,
   },
   vehicleDetails: {
     padding: 20,
+    gap: 12,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    // marginBottom: 16,
+  },
+  detailIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   detailLabel: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#666',
-    width: 120,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    width: 100,
+    fontWeight: '500',
   },
   detailValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: '600',
     flex: 1,
   },
+  fuelTypeValue: {
+    color: Colors.secondary,
+  },
   quotaValue: {
-    color: '#4CAF50',
+    color: Colors.accent,
     fontWeight: 'bold',
   },
   dispensingCard: {
     margin: 20,
     marginTop: 0,
-    backgroundColor: '#fff',
-    borderRadius: 15,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginLeft: 8,
+  },
   quickAmountContainer: {
-    marginBottom: 25,
+    marginBottom: 24,
   },
   quickAmountLabel: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    fontWeight: '500',
   },
   quickAmountButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   quickAmountButton: {
-    backgroundColor: '#E3F2FD',
+    flex: 1,
+    backgroundColor: Colors.surfaceSecondary,
     paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  quickAmountButtonSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   quickAmountButtonText: {
-    color: '#2196F3',
-    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  quickAmountButtonTextSelected: {
+    color: Colors.textWhite,
+  },
+  inputSection: {
+    marginBottom: 24,
+  },
+  inputSectionTitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    fontWeight: '500',
   },
   inputContainer: {
+    alignItems: 'center',
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
-  },
-  inputLabel: {
-    fontSize: 16,
-    color: '#666',
-    width: 150,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: 150,
   },
   literInput: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
     fontSize: 18,
     textAlign: 'center',
-    marginHorizontal: 10,
+    color: Colors.textPrimary,
+    fontWeight: '600',
   },
   inputUnit: {
-    fontSize: 16,
-    color: '#666',
-    width: 50,
-  },
-  calculationCard: {
-    backgroundColor: '#F8F9FA',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 25,
-  },
-  calculationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  calculationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  calculationLabel: {
     fontSize: 14,
-    color: '#666',
-  },
-  calculationValue: {
-    fontSize: 14,
-    color: '#333',
+    color: Colors.textSecondary,
     fontWeight: '500',
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    paddingTop: 10,
-    marginTop: 10,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    marginLeft: 8,
   },
   processButton: {
-    borderRadius: 15,
+    borderRadius: 12,
     overflow: 'hidden',
+    shadowColor: Colors.textPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   processButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   processButtonGradient: {
-    padding: 20,
+    padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   processButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: Colors.textWhite,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 10,
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.surface,
     margin: 20,
-    borderRadius: 15,
-    padding: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 12,
+    padding: 24,
+    minWidth: 300,
+    shadowColor: Colors.textPrimary,
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
-  confirmationDetails: {
-    marginBottom: 25,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginLeft: 8,
   },
-  confirmationText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 8,
-    textAlign: 'center',
+  confirmationDetails: {
+    marginBottom: 24,
+  },
+  confirmationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  confirmationLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginLeft: 8,
+    width: 80,
+    fontWeight: '500',
+  },
+  confirmationValue: {
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
+  },
+  amountValue: {
+    color: Colors.secondary,
+  },
+  remainingValue: {
+    color: Colors.accent,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    gap: 12,
   },
   modalCancelButton: {
     flex: 1,
-    padding: 15,
-    marginRight: 10,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    // padding: 14,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalCancelText: {
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   modalConfirmButton: {
     flex: 1,
-    padding: 15,
-    marginLeft: 10,
-    backgroundColor: '#4CAF50',
-    borderRadius: 10,
-    alignItems: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  modalCancelText: {
-    color: '#666',
-    fontWeight: 'bold',
+  modalConfirmGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
   },
   modalConfirmText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.textWhite,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   processingOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   processingContent: {
-    backgroundColor: '#fff',
-    padding: 30,
-    borderRadius: 15,
+    backgroundColor: Colors.surface,
+    padding: 32,
+    borderRadius: 12,
     alignItems: 'center',
-  }, processingText: {
-    marginTop: 15,
+    minWidth: 200,
+  },
+  processingText: {
+    marginTop: 16,
     fontSize: 16,
-    color: '#333',
+    color: Colors.textPrimary,
+    fontWeight: '600',
   },
-  carIcon: {
-    fontSize: 30,
-    color: '#fff',
-  },
-  detailIcon: {
-    fontSize: 20,
-    width: 20,
+  processingSubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    marginRight: 10,
-  },
-  processIcon: {
-    fontSize: 24,
-    color: '#fff',
+    lineHeight: 20,
   },
 });
 

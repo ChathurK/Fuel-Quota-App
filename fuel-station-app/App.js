@@ -10,6 +10,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import QRScannerScreen from './src/screens/QRScannerScreen';
 import FuelTransactionScreen from './src/screens/FuelTransactionScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
+import { Colors } from './src/constants/Colors';
 
 const Stack = createStackNavigator();
 
@@ -21,9 +22,9 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#2196F3',
+            backgroundColor: Colors.primary,
           },
-          headerTintColor: '#fff',
+          headerTintColor: Colors.textWhite,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -58,12 +59,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
