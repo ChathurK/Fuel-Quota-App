@@ -1,4 +1,3 @@
-// src/pages/VehicleDashboard.js (Enhanced with Real API Data)
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -20,7 +19,11 @@ import {
   LinearProgress,
   Avatar,
   IconButton,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -31,13 +34,15 @@ import {
   Warning as WarningIcon,
   TrendingUp as TrendingUpIcon,
   Refresh as RefreshIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Close as CloseIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { VehicleService, FuelQuotaService } from '../services/ApiService';
 import AuthService from '../services/AuthService';
 import NotificationService from '../services/NotificationService';
-import { FormatUtils, QuotaUtils, DateUtils } from '../utils';
+import { FormatUtils, QuotaUtils, DateUtils, QRUtils } from '../utils';
 
 const VehicleDashboard = () => {
   const navigate = useNavigate();
@@ -56,6 +61,11 @@ const VehicleDashboard = () => {
     totalQuotaUsed: 0,
     lastRefillDate: null
   });
+
+  // QR Code dialog state
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [qrCodeImage, setQrCodeImage] = useState('');
 
   // Load dashboard data
   useEffect(() => {
@@ -94,15 +104,33 @@ const VehicleDashboard = () => {
       });
       setQuotaData(quotaMap);
 
-      // Load recent transactions for the first vehicle (or all if needed)
-      if (vehiclesList.length > 0) {
-        try {
-          const transactionsResponse = await FuelQuotaService.getVehicleTransactions(vehiclesList[0].id);
-          setRecentTransactions(transactionsResponse.data.slice(0, 5)); // Last 5 transactions
-        } catch (error) {
-          console.error('Error loading transactions:', error);
-          setRecentTransactions([]);
-        }
+      // Load recent transactions for ALL vehicles
+      try {
+        const transactionPromises = vehiclesList.map(async (vehicle) => {
+          try {
+            const transactionsResponse = await FuelQuotaService.getVehicleTransactions(vehicle.id);
+            return transactionsResponse.data.map(transaction => ({
+              ...transaction,
+              vehicleId: vehicle.id // Add vehicle ID for identification
+            }));
+          } catch (error) {
+            console.error(`Error loading transactions for vehicle ${vehicle.id}:`, error);
+            return [];
+          }
+        });
+
+        const allTransactionResults = await Promise.all(transactionPromises);
+        
+        // Flatten and sort all transactions by timestamp (most recent first)
+        const allTransactions = allTransactionResults
+          .flat()
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        setRecentTransactions(allTransactions.slice(0, 2)); // Last 3 transactions across all vehicles
+        
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        setRecentTransactions([]);
       }
 
       // Calculate dashboard statistics
@@ -152,6 +180,44 @@ const VehicleDashboard = () => {
     await loadDashboardData();
     setRefreshing(false);
     NotificationService.success('Dashboard refreshed!');
+  };
+
+  // Handle QR code display (same as VehicleList)
+  const handleShowQR = async (vehicle) => {
+    try {
+      setSelectedVehicle(vehicle);
+      setQrDialogOpen(true);
+      
+      // Generate QR code image
+      const qrImage = await QRUtils.generateQRCode(vehicle.qrCode || vehicle.registrationNumber);
+      setQrCodeImage(qrImage);
+    } catch (error) {
+      NotificationService.error('Failed to generate QR code');
+      console.error('QR generation error:', error);
+    }
+  };
+
+  // Handle QR code download (same as VehicleList)
+  const handleDownloadQR = () => {
+    if (qrCodeImage && selectedVehicle) {
+      const link = document.createElement('a');
+      link.download = `${selectedVehicle.registrationNumber}_QR.png`;
+      link.href = qrCodeImage;
+      link.click();
+      NotificationService.success('QR code downloaded successfully!');
+    }
+  };
+
+  // Close QR dialog (same as VehicleList)
+  const handleCloseQR = () => {
+    setQrDialogOpen(false);
+    setSelectedVehicle(null);
+    setQrCodeImage('');
+  };
+
+  // Handle view details
+  const handleViewDetails = (vehicle) => {
+    navigate(`/vehicle/list`);
   };
 
   // Render quick action buttons
@@ -392,12 +458,14 @@ const VehicleDashboard = () => {
                   </CardContent>
                   
                   <CardActions>
-                    <Button size="small" startIcon={<QrCodeIcon />}>
+                    <Button 
+                      size="small" 
+                      startIcon={<QrCodeIcon />}
+                      onClick={() => handleShowQR(vehicle)}
+                    >
                       QR Code
                     </Button>
-                    <Button size="small" startIcon={<InfoIcon />}>
-                      Details
-                    </Button>
+                    
                   </CardActions>
                 </Card>
               </Grid>
@@ -491,24 +559,12 @@ const VehicleDashboard = () => {
         </Typography>
       </Box>
 
+
+
+
       {/* Quick Actions */}
       {renderQuickActions()}
-
-      {/* Summary Cards */}
-      {renderSummaryCards()}
-
-      {/* Main Content Grid */}
-      <Grid container spacing={3}>
-        {/* Vehicle Overview */}
-        <Grid item xs={12} lg={8}>
-          {renderVehicleOverview()}
-        </Grid>
-
-        {/* Recent Transactions */}
-        <Grid item xs={12} lg={4}>
-          {renderRecentTransactions()}
-        </Grid>
-      </Grid>
+      
 
       {/* Low Quota Alert */}
       {dashboardStats.lowQuotaVehicles > 0 && (
@@ -527,6 +583,78 @@ const VehicleDashboard = () => {
           </Button>
         </Alert>
       )}
+
+      {/* Summary Cards */}
+      <Box sx={{ mt: 4 }}>
+      {renderSummaryCards()}
+      </Box>
+
+      {/* Main Content Grid */}
+      <Grid container spacing={3}>
+        {/* Vehicle Overview */}
+        <Grid item xs={12} lg={8}>
+          {renderVehicleOverview()}
+        </Grid>
+
+        {/* Recent Transactions */}
+        <Grid item xs={12} lg={4}>
+          {renderRecentTransactions()}
+        </Grid>
+      </Grid>
+
+      
+
+      {/* QR Code Dialog - Same as VehicleList */}
+      <Dialog
+        open={qrDialogOpen}
+        onClose={handleCloseQR}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">
+            QR Code - {selectedVehicle?.registrationNumber}
+          </Typography>
+          <IconButton onClick={handleCloseQR}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ textAlign: 'center', py: 3 }}>
+          {qrCodeImage ? (
+            <Box>
+              <img 
+                src={qrCodeImage} 
+                alt="Vehicle QR Code" 
+                style={{ maxWidth: '100%', height: 'auto', maxHeight: '300px' }}
+              />
+              <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
+                <Typography variant="body2">
+                  <strong>How to use:</strong>
+                </Typography>
+                <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                  <li>Show this QR code to the fuel station operator</li>
+                  <li>They will scan it to check your quota</li>
+                  <li>Fuel will be dispensed and deducted from your quota</li>
+                </ul>
+              </Alert>
+            </Box>
+          ) : (
+            <CircularProgress />
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadQR}
+            disabled={!qrCodeImage}
+          >
+            Download QR Code
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -791,19 +791,7 @@ const StationTransactionHistory = () => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Owner Name
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {selectedTransaction.ownerName || 'N/A'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
+              
 
               {/* Station Information */}
               <Grid item xs={12}>

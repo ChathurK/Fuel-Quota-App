@@ -95,7 +95,7 @@ const StationDashboard = () => {
         .flat()
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      setRecentTransactions(flatTransactions.slice(0, 10)); // Last 10 transactions
+      setRecentTransactions(flatTransactions.slice(0, 3)); // Last 10 transactions
 
       // Calculate dashboard statistics
       calculateDashboardStats(stationsList, flatTransactions);
@@ -405,13 +405,7 @@ const StationDashboard = () => {
                   >
                     Scan QR
                   </Button>
-                  <Button
-                    size="small"
-                    startIcon={<AnalyticsIcon />}
-                    onClick={() => navigate(`/station/${station.id}/dashboard`)}
-                  >
-                    Analytics
-                  </Button>
+                  
                 </CardActions>
               </Card>
             </Grid>

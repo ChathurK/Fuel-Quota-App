@@ -81,7 +81,7 @@ const Navbar = () => {
       pages.push({ title: 'Dashboard', path: '/vehicle' });
       pages.push({ title: 'My Vehicles', path: '/vehicle/list' });
       pages.push({ title: 'Add Vehicle', path: '/vehicle/add' });
-      pages.push({ title: 'Quota Status', path: '/vehicle/quota' });
+      
     }
   }
 

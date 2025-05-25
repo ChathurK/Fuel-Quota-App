@@ -23,6 +23,7 @@ import UserProfile from "./pages/UserProfile";
 import VehicleDashboard from "./pages/VehicleDashboard";
 import VehicleRegistration from "./pages/VehicleRegistration";
 import VehicleList from "./pages/VehicleList";
+import VehicleTransactions from "./pages/VehicleTransactions";
 
 // Pages - Station Owner
 import StationDashboard from "./pages/StationDashboard";
@@ -191,6 +192,23 @@ function App() {
             element={
               <PrivateRoute roles={["ROLE_VEHICLE_OWNER"]}>
                 <VehicleList />
+              </PrivateRoute>
+            }
+          />
+          {/* ADD THESE NEW TRANSACTION ROUTES */}
+          <Route
+            path="/vehicle/transactions"
+            element={
+              <PrivateRoute roles={["ROLE_VEHICLE_OWNER"]}>
+                <VehicleTransactions />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vehicle/transactions/:vehicleId"
+            element={
+              <PrivateRoute roles={["ROLE_VEHICLE_OWNER"]}>
+                <VehicleTransactions />
               </PrivateRoute>
             }
           />

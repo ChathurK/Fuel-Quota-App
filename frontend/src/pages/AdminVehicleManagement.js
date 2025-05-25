@@ -22,7 +22,6 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -88,6 +87,7 @@ const AdminVehicleManagement = () => {
     try {
       setLoading(true);
       const response = await VehicleService.getAllVehicles();
+      console.log('Vehicles data:', response.data); // Debug log
       setVehicles(response.data);
       calculateStats(response.data);
     } catch (error) {
@@ -110,6 +110,19 @@ const AdminVehicleManagement = () => {
     setVehicleStats(stats);
   };
 
+  // Simplified helper functions based on backend structure
+  const getOwnerName = (vehicle) => {
+    return vehicle.ownerName || 'N/A';
+  };
+
+  const getOwnerEmail = (vehicle) => {
+    return vehicle.ownerEmail || 'N/A';
+  };
+
+  const getOwnerPhone = (vehicle) => {
+    return vehicle.ownerPhone || 'N/A';
+  };
+
   const filterVehicles = () => {
     let filtered = [...vehicles];
 
@@ -117,7 +130,7 @@ const AdminVehicleManagement = () => {
     if (searchTerm) {
       filtered = filtered.filter(vehicle =>
         vehicle.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.ownerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getOwnerName(vehicle).toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicle.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -139,9 +152,11 @@ const AdminVehicleManagement = () => {
     try {
       // Get detailed vehicle info
       const response = await VehicleService.getVehicleById(vehicle.id);
+      console.log('Vehicle details:', response.data); // Debug log
       setSelectedVehicle(response.data);
       setDetailsDialogOpen(true);
     } catch (error) {
+      console.error('Error loading vehicle details:', error);
       NotificationService.error('Failed to load vehicle details');
     }
   };
@@ -201,7 +216,7 @@ const AdminVehicleManagement = () => {
             Vehicle Management
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Monitor and manage registered vehicles in the system
+            Monitor and view registered vehicles in the system
           </Typography>
         </Box>
         <Tooltip title="Refresh Vehicles">
@@ -232,7 +247,107 @@ const AdminVehicleManagement = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    Cars
+                  </Typography>
+                  <Typography variant="h4" color="primary.main">
+                    {vehicleStats.cars}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                  <VehicleIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    Motorcycles
+                  </Typography>
+                  <Typography variant="h4" color="success.main">
+                    {vehicleStats.motorcycles}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'success.main' }}>
+                  <MotorcycleIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    Three Wheelers
+                  </Typography>
+                  <Typography variant="h4" color="warning.main">
+                    {vehicleStats.threeWheelers}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'warning.main' }}>
+                  <ThreeWheelerIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    Petrol
+                  </Typography>
+                  <Typography variant="h4" color="success.main">
+                    {vehicleStats.petrol}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'success.main' }}>
+                  <FuelIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    Diesel
+                  </Typography>
+                  <Typography variant="h4" color="info.main">
+                    {vehicleStats.diesel}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: 'info.main' }}>
+                  <FuelIcon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Filters */}
       <Paper sx={{ p: 3, mb: 3 }}>
@@ -334,13 +449,11 @@ const AdminVehicleManagement = () => {
                   
                   <TableCell>
                     <Typography variant="body2">
-                      {vehicle.ownerName || 'N/A'}
+                      {getOwnerName(vehicle)}
                     </Typography>
-                    {vehicle.ownerEmail && (
-                      <Typography variant="body2" color="text.secondary">
-                        {vehicle.ownerEmail}
-                      </Typography>
-                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      {getOwnerEmail(vehicle)}
+                    </Typography>
                   </TableCell>
                   
                   <TableCell>
@@ -543,7 +656,7 @@ const AdminVehicleManagement = () => {
                       Owner Name
                     </Typography>
                     <Typography variant="body1" fontWeight="bold">
-                      {selectedVehicle.ownerName || 'N/A'}
+                      {getOwnerName(selectedVehicle)}
                     </Typography>
                   </Box>
                 </Box>
@@ -557,11 +670,27 @@ const AdminVehicleManagement = () => {
                       Owner Email
                     </Typography>
                     <Typography variant="body1" fontWeight="bold">
-                      {selectedVehicle.ownerEmail || 'N/A'}
+                      {getOwnerEmail(selectedVehicle)}
                     </Typography>
                   </Box>
                 </Box>
               </Grid>
+
+              {getOwnerPhone(selectedVehicle) !== 'N/A' && (
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Owner Phone
+                      </Typography>
+                      <Typography variant="body1" fontWeight="bold">
+                        {getOwnerPhone(selectedVehicle)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              )}
 
               {/* Registration Information */}
               <Grid item xs={12}>
@@ -603,4 +732,4 @@ const AdminVehicleManagement = () => {
   );
 };
 
-export default AdminVehicleManagement; 
+export default AdminVehicleManagement;
