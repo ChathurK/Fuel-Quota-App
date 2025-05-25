@@ -53,6 +53,7 @@ const ApiService = {
     });
     return response.data;
   },
+  
   // Vehicle quota endpoints
   checkQuotaByQR: async (qrData) => {
     const response = await apiClient.get(`/fuel/quota/scan/${qrData}`);
@@ -68,7 +69,9 @@ const ApiService = {
   getStationTransactions: async (stationId) => {
     const response = await apiClient.get(`/fuel/transactions/station/${stationId}`);
     return response.data;
-  },  // Station endpoints
+  },
+  
+  // Station endpoints
   getMyStations: async () => {
     const response = await apiClient.get('/station/my-stations');
     return response.data;
