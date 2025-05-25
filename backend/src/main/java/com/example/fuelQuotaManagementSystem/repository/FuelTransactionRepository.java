@@ -8,4 +8,6 @@ import java.util.List;
 public interface FuelTransactionRepository extends JpaRepository<FuelTransaction, Long> {
     List<FuelTransaction> findByVehicleOrderByTimestampDesc(Vehicle vehicle);
     List<FuelTransaction> findByVehicleIdOrderByTimestampDesc(Long vehicleId);
+
+    List<FuelTransaction> findByStationIdOrderByTimestampDesc(Long stationId);
 }

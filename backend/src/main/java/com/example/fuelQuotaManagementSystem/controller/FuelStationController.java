@@ -33,9 +33,9 @@ public class FuelStationController {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Register a new fuel station (Station Owner only)
-     */
+
+     //Register a new fuel station (Station Owner only)
+
     @PostMapping("/register")
     @PreAuthorize("hasRole('STATION_OWNER')")
     public ResponseEntity<?> registerFuelStation(@Valid @RequestBody FuelStationRegistrationRequest request,
@@ -66,9 +66,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get fuel stations owned by current user (Station Owner only)
-     */
+
+     //Get fuel stations owned by current user (Station Owner only)
+
     @GetMapping("/my-stations")
     @PreAuthorize("hasRole('STATION_OWNER')")
     public ResponseEntity<?> getMyStations(Authentication authentication) {
@@ -87,9 +87,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get all fuel stations (Admin only)
-     */
+
+     //Get all fuel stations (Admin only)
+
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllStations() {
@@ -107,9 +107,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get fuel station by ID
-     */
+
+     //Get fuel station by ID
+
     @GetMapping("/{stationId}")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getStationById(@PathVariable Long stationId, Authentication authentication) {
@@ -133,9 +133,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Update fuel station information
-     */
+
+     //Update fuel station information
+
     @PutMapping("/{stationId}")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStation(@PathVariable Long stationId,
@@ -161,9 +161,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Activate/Deactivate fuel station (Admin only)
-     */
+
+     //Activate/Deactivate fuel station (Admin only)
+
     @PutMapping("/{stationId}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateStationStatus(@PathVariable Long stationId,
@@ -182,35 +182,11 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get active fuel stations near a location (Public endpoint for mobile app)
-     */
-    @GetMapping("/nearby")
-    public ResponseEntity<?> getNearbyStations(@RequestParam String city,
-                                               @RequestParam(required = false) String fuelType) {
-        try {
-            List<FuelStation> stations;
 
-            if (fuelType != null && !fuelType.isEmpty()) {
-                stations = fuelStationService.findStationsByFuelType(city, fuelType);
-            } else {
-                stations = fuelStationService.findNearbyStations(city);
-            }
 
-            List<FuelStationResponse> stationResponses = stations.stream()
-                    .map(this::convertToStationResponse)
-                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok(stationResponses);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new MessageResponse("Error finding nearby stations: " + e.getMessage()));
-        }
-    }
+     //Get fuel station dashboard with transaction stats
 
-    /**
-     * Get fuel station dashboard with transaction stats
-     */
     @GetMapping("/{stationId}/dashboard")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getStationDashboard(@PathVariable Long stationId, Authentication authentication) {
@@ -234,9 +210,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get station statistics for date range (Station Owner/Admin)
-     */
+
+     //Get station statistics for date range (Station Owner/Admin)
+
     @GetMapping("/{stationId}/statistics")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getStationStatistics(@PathVariable Long stationId,
@@ -263,9 +239,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get system-wide station analytics (Admin only)
-     */
+
+     //Get system-wide station analytics (Admin only)
+
     @GetMapping("/analytics/by-city")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getStationCountByCity() {
@@ -278,9 +254,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Get station status summary (Admin only)
-     */
+
+     //Get station status summary (Admin only)
+
     @GetMapping("/analytics/status-summary")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getStationStatusSummary() {
@@ -293,9 +269,9 @@ public class FuelStationController {
         }
     }
 
-    /**
-     * Helper method to convert FuelStation entity to FuelStationResponse DTO
-     */
+
+     //Helper method to convert FuelStation entity to FuelStationResponse DTO
+
     private FuelStationResponse convertToStationResponse(FuelStation station) {
         return new FuelStationResponse(
                 station.getId(),

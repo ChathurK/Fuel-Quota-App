@@ -15,40 +15,27 @@ import java.util.Map;
 public class NotificationService {
 
     // Twilio Configuration
-    @Value("${twilio.account.sid}")
+    @Value("${twilio.account.sid:}")
     private String twilioAccountSid;
 
-    @Value("${twilio.auth.token}")
+    @Value("${twilio.auth.token:}")
     private String twilioAuthToken;
 
-    @Value("${twilio.phone.number}")
+    @Value("${twilio.phone.number:}")
     private String twilioPhoneNumber;
-
-    // Mailgun Configuration
-    @Value("${mailgun.api.key:your_mailgun_api_key}")
-    private String mailgunApiKey;
-
-    @Value("${mailgun.domain:your_domain.mailgun.org}")
-    private String mailgunDomain;
-
-    @Value("${mailgun.from.email:noreply@yourdomain.com}")
-    private String mailgunFromEmail;
 
     // Configuration flags
     @Value("${notification.sms.enabled:false}")
     private boolean smsEnabled;
-
-    @Value("${notification.email.enabled:true}")
-    private boolean emailEnabled;
 
     @Value("${notification.mock.mode:true}")
     private boolean mockMode;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * Send SMS notification using Twilio REST API
-     */
+
+     //Send SMS notification using Twilio REST API
+
     public boolean sendSMS(String phoneNumber, String message) {
         if (!smsEnabled) {
             System.out.println("SMS disabled in configuration");
@@ -61,7 +48,10 @@ public class NotificationService {
 
         if (!isTwilioConfigured()) {
             System.err.println("Twilio not properly configured");
-            return sendEmailAsFallback(phoneNumber, message);
+            System.err.println("Account SID: " + (twilioAccountSid != null && !twilioAccountSid.trim().isEmpty() ? "SET" : "MISSING"));
+            System.err.println("Auth Token: " + (twilioAuthToken != null && !twilioAuthToken.trim().isEmpty() ? "SET" : "MISSING"));
+            System.err.println("Phone Number: " + (twilioPhoneNumber != null && !twilioPhoneNumber.trim().isEmpty() ? "SET" : "MISSING"));
+            return false;
         }
 
         try {
@@ -101,99 +91,32 @@ public class NotificationService {
         } catch (Exception e) {
             System.err.println("Error sending SMS: " + e.getMessage());
             e.printStackTrace();
-            // Fallback to email if SMS fails
-            return sendEmailAsFallback(phoneNumber, message);
+            return false; // Simply return false when SMS fails
         }
     }
 
-    /**
-     * Send email notification using Mailgun
-     */
-    public boolean sendEmail(String email, String subject, String message) {
-        if (!emailEnabled) {
-            System.out.println("Email disabled in configuration");
-            return false;
-        }
 
-        if (mockMode) {
-            return sendMockEmail(email, subject, message);
-        }
+     //Send fuel transaction notification
 
-        if (!isMailgunConfigured()) {
-            System.err.println("Mailgun not properly configured");
-            return false;
-        }
-
-        try {
-            // Mailgun API URL
-            String url = String.format("https://api.mailgun.net/v3/%s/messages", mailgunDomain);
-
-            // Create headers with API key
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            String auth = "api:" + mailgunApiKey;
-            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
-            headers.set("Authorization", "Basic " + encodedAuth);
-
-            // Create request body
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("from", "Fuel Quota System <" + mailgunFromEmail + ">");
-            body.add("to", email);
-            body.add("subject", subject);
-            body.add("text", message);
-
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-
-            // Send request
-            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-
-            if (response.getStatusCode() == HttpStatus.OK) {
-                System.out.println("Email sent successfully to: " + email);
-                return true;
-            } else {
-                System.err.println("Failed to send email. Status: " + response.getStatusCode());
-                System.err.println("Response: " + response.getBody());
-                return false;
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error sending email: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Send fuel transaction notification (Primary method used by controllers)
-     */
     public boolean sendFuelTransactionNotification(String phoneNumber, String email,
                                                    String vehicleRegNo, String fuelType,
                                                    double amount, String stationName,
                                                    double remainingQuota, Long transactionId) {
 
         String smsMessage = createFuelTransactionSMSMessage(vehicleRegNo, fuelType, amount, stationName, remainingQuota, transactionId);
-        String emailSubject = "Fuel Transaction Alert - " + vehicleRegNo;
-        String emailMessage = createFuelTransactionEmailMessage(vehicleRegNo, fuelType, amount, stationName, remainingQuota, transactionId);
 
-        boolean smsSuccess = false;
-        boolean emailSuccess = false;
 
-        // Try SMS first
         if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-            smsSuccess = sendSMS(phoneNumber, smsMessage);
+            return sendSMS(phoneNumber, smsMessage);
         }
 
-        // Send email as backup or primary
-        if (email != null && !email.trim().isEmpty()) {
-            emailSuccess = sendEmail(email, emailSubject, emailMessage);
-        }
-
-        return smsSuccess || emailSuccess;
+        System.out.println("No phone number provided for SMS notification");
+        return false;
     }
 
-    /**
-     * Send quota status notification
-     */
+
+     //Send quota status notification
+
     public boolean sendQuotaStatusNotification(String phoneNumber, String email, String vehicleRegNo,
                                                double remainingQuota, double allocatedQuota, String fuelType) {
 
@@ -204,38 +127,14 @@ public class NotificationService {
                 vehicleRegNo, remainingQuota, fuelType, usagePercentage
         );
 
-        String emailSubject = "Fuel Quota Status - " + vehicleRegNo;
-        String emailMessage = String.format(
-                "Dear Vehicle Owner,\n\n" +
-                        "Here's your current fuel quota status:\n\n" +
-                        "Vehicle: %s\n" +
-                        "Fuel Type: %s\n" +
-                        "Allocated Quota: %.1f Liters\n" +
-                        "Remaining Quota: %.1f Liters\n" +
-                        "Used: %.1f Liters (%.1f%%)\n\n" +
-                        "Please plan your fuel usage accordingly.\n\n" +
-                        "Thank you,\nFuel Quota Management System",
-                vehicleRegNo, fuelType, allocatedQuota, remainingQuota,
-                (allocatedQuota - remainingQuota), usagePercentage
-        );
-
-        boolean smsSuccess = false;
-        boolean emailSuccess = false;
-
         if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-            smsSuccess = sendSMS(phoneNumber, smsMessage);
+            return sendSMS(phoneNumber, smsMessage);
         }
 
-        if (email != null && !email.trim().isEmpty()) {
-            emailSuccess = sendEmail(email, emailSubject, emailMessage);
-        }
-
-        return smsSuccess || emailSuccess;
+        return false;
     }
 
-    /**
-     * Send low quota warning
-     */
+
     public boolean sendLowQuotaWarning(String phoneNumber, String email, String vehicleRegNo,
                                        double remainingQuota, String fuelType, double warningThreshold) {
 
@@ -244,37 +143,14 @@ public class NotificationService {
                 vehicleRegNo, remainingQuota, fuelType, warningThreshold
         );
 
-        String emailSubject = "Low Fuel Quota Warning - " + vehicleRegNo;
-        String emailMessage = String.format(
-                "Dear Vehicle Owner,\n\n" +
-                        "⚠️ LOW QUOTA WARNING ⚠️\n\n" +
-                        "Your fuel quota is running low:\n\n" +
-                        "Vehicle: %s\n" +
-                        "Fuel Type: %s\n" +
-                        "Remaining Quota: %.1f Liters\n" +
-                        "Warning Threshold: %.1f Liters\n\n" +
-                        "Please visit a fuel station soon to use your remaining quota.\n\n" +
-                        "Thank you,\nFuel Quota Management System",
-                vehicleRegNo, fuelType, remainingQuota, warningThreshold
-        );
-
-        boolean smsSuccess = false;
-        boolean emailSuccess = false;
-
         if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-            smsSuccess = sendSMS(phoneNumber, smsMessage);
+            return sendSMS(phoneNumber, smsMessage);
         }
 
-        if (email != null && !email.trim().isEmpty()) {
-            emailSuccess = sendEmail(email, emailSubject, emailMessage);
-        }
-
-        return smsSuccess || emailSuccess;
+        return false;
     }
 
-    /**
-     * Send quota expiry warning
-     */
+
     public boolean sendQuotaExpiryWarning(String phoneNumber, String email, String vehicleRegNo,
                                           double remainingQuota, String expiryDate) {
 
@@ -283,27 +159,16 @@ public class NotificationService {
                 vehicleRegNo, remainingQuota, expiryDate
         );
 
-        String emailSubject = "Fuel Quota Expiry Warning - " + vehicleRegNo;
-        String emailMessage = String.format(
-                "Dear Vehicle Owner,\n\n" +
-                        "This is to inform you that your fuel quota for vehicle %s is expiring soon.\n\n" +
-                        "Remaining Quota: %.1f Liters\n" +
-                        "Expiry Date: %s\n\n" +
-                        "Please ensure to utilize your remaining quota before the expiry date. " +
-                        "Unused quota will not be carried forward to the next month.\n\n" +
-                        "Thank you,\nFuel Quota Management System",
-                vehicleRegNo, remainingQuota, expiryDate
-        );
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            return sendSMS(phoneNumber, smsMessage);
+        }
 
-        boolean smsSuccess = sendSMS(phoneNumber, smsMessage);
-        boolean emailSuccess = sendEmail(email, emailSubject, emailMessage);
-
-        return smsSuccess || emailSuccess;
+        return false;
     }
 
-    /**
-     * Send new monthly quota allocation notification
-     */
+
+     //Send new monthly quota allocation notification
+
     public boolean sendNewQuotaAllocationNotification(String phoneNumber, String email,
                                                       String vehicleRegNo, double allocatedQuota,
                                                       String month) {
@@ -313,27 +178,16 @@ public class NotificationService {
                 vehicleRegNo, allocatedQuota, month
         );
 
-        String emailSubject = "New Monthly Fuel Quota - " + vehicleRegNo;
-        String emailMessage = String.format(
-                "Dear Vehicle Owner,\n\n" +
-                        "Your new monthly fuel quota has been allocated.\n\n" +
-                        "Vehicle: %s\n" +
-                        "Allocated Quota: %.1f Liters\n" +
-                        "Valid for: %s\n\n" +
-                        "You can check your quota status anytime through our portal or mobile app.\n\n" +
-                        "Thank you,\nFuel Quota Management System",
-                vehicleRegNo, allocatedQuota, month
-        );
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            return sendSMS(phoneNumber, smsMessage);
+        }
 
-        boolean smsSuccess = sendSMS(phoneNumber, smsMessage);
-        boolean emailSuccess = sendEmail(email, emailSubject, emailMessage);
-
-        return smsSuccess || emailSuccess;
+        return false;
     }
 
-    /**
-     * Format Sri Lankan phone numbers for international format
-     */
+
+     //Format Sri Lankan phone numbers for international format
+
     private String formatSriLankanPhoneNumber(String phoneNumber) {
         if (phoneNumber == null) return null;
 
@@ -358,9 +212,9 @@ public class NotificationService {
         return phoneNumber; // Return as-is if we can't format it
     }
 
-    /**
-     * Create SMS message for fuel transaction
-     */
+
+     //Create SMS message for fuel transaction
+
     private String createFuelTransactionSMSMessage(String vehicleRegNo, String fuelType,
                                                    double amount, String stationName,
                                                    double remainingQuota, Long transactionId) {
@@ -370,67 +224,16 @@ public class NotificationService {
         );
     }
 
-    /**
-     * Create email message for fuel transaction
-     */
-    private String createFuelTransactionEmailMessage(String vehicleRegNo, String fuelType,
-                                                     double amount, String stationName,
-                                                     double remainingQuota, Long transactionId) {
-        return String.format(
-                "Dear Vehicle Owner,\n\n" +
-                        "This is to confirm your recent fuel transaction:\n\n" +
-                        "Vehicle: %s\n" +
-                        "Fuel Type: %s\n" +
-                        "Amount Pumped: %.1f Liters\n" +
-                        "Fuel Station: %s\n" +
-                        "Remaining Quota: %.1f Liters\n" +
-                        "Transaction Reference: #%d\n" +
-                        "Date & Time: %s\n\n" +
-                        "If you did not authorize this transaction, please contact us immediately.\n\n" +
-                        "Thank you,\nFuel Quota Management System",
-                vehicleRegNo, fuelType, amount, stationName, remainingQuota, transactionId,
-                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        );
-    }
 
-    /**
-     * Send email as fallback when SMS fails
-     */
-    private boolean sendEmailAsFallback(String phoneNumber, String smsMessage) {
-        System.out.println("SMS failed, attempting email fallback...");
+     //Check if Twilio is properly configured
 
-        String fallbackEmail = "admin@fuelquota.lk";
-        String subject = "SMS Delivery Failed - Manual Notification Required";
-        String message = String.format(
-                "Failed to deliver SMS to: %s\n" +
-                        "Original message: %s\n\n" +
-                        "Please contact the vehicle owner manually.",
-                phoneNumber, smsMessage
-        );
-
-        return sendEmail(fallbackEmail, subject, message);
-    }
-
-    /**
-     * Check if Twilio is properly configured
-     */
     private boolean isTwilioConfigured() {
         return twilioAccountSid != null && !twilioAccountSid.trim().isEmpty() &&
                 twilioAuthToken != null && !twilioAuthToken.trim().isEmpty() &&
                 twilioPhoneNumber != null && !twilioPhoneNumber.trim().isEmpty();
     }
 
-    /**
-     * Check if Mailgun is properly configured
-     */
-    private boolean isMailgunConfigured() {
-        return mailgunApiKey != null && !mailgunApiKey.equals("your_mailgun_api_key") &&
-                mailgunDomain != null && !mailgunDomain.equals("your_domain.mailgun.org");
-    }
 
-    /**
-     * Mock SMS for testing/development
-     */
     private boolean sendMockSMS(String phoneNumber, String message) {
         System.out.println("=== MOCK SMS ===");
         System.out.println("To: " + phoneNumber);
@@ -440,47 +243,19 @@ public class NotificationService {
         return true;
     }
 
-    /**
-     * Mock Email for testing/development
-     */
-    private boolean sendMockEmail(String email, String subject, String message) {
-        System.out.println("=== MOCK EMAIL ===");
-        System.out.println("To: " + email);
-        System.out.println("Subject: " + subject);
-        System.out.println("Message: " + message);
-        System.out.println("Email sent successfully (MOCK MODE)");
-        System.out.println("==================");
-        return true;
-    }
 
-    /**
-     * Test notification service configuration
-     */
     public Map<String, Object> testConfiguration() {
         Map<String, Object> config = new HashMap<>();
         config.put("smsEnabled", smsEnabled);
-        config.put("emailEnabled", emailEnabled);
         config.put("mockMode", mockMode);
         config.put("twilioConfigured", isTwilioConfigured());
-        config.put("mailgunConfigured", isMailgunConfigured());
 
         return config;
     }
 
-    /**
-     * Test SMS sending
-     */
+
     public boolean testSMS(String phoneNumber) {
         String testMessage = "Test SMS from Fuel Quota Management System. Your SMS configuration is working!";
         return sendSMS(phoneNumber, testMessage);
-    }
-
-    /**
-     * Test Email sending
-     */
-    public boolean testEmail(String email) {
-        String subject = "Test Email - Fuel Quota Management System";
-        String message = "This is a test email to verify your email configuration is working correctly.\n\nThank you,\nFuel Quota Management System";
-        return sendEmail(email, subject, message);
     }
 }

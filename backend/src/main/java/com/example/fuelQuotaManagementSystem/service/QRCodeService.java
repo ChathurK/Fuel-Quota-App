@@ -21,10 +21,7 @@ public class QRCodeService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Generate QR code data for a vehicle
-     * This creates a JSON string containing vehicle information that will be encoded as QR
-     */
+
     public String generateQRCode(Vehicle vehicle) {
         try {
             // Create QR data object
@@ -52,10 +49,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Decode QR code and extract registration number
-     * This method validates the QR code and extracts the vehicle registration number
-     */
+
     public String decodeQRCode(String qrCodeData) {
         try {
             // Decode from Base64
@@ -89,10 +83,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Get full vehicle information from QR code
-     * This method extracts all vehicle details from the QR code
-     */
+
     public Map<String, Object> getVehicleInfoFromQR(String qrCodeData) {
         try {
             // Decode from Base64
@@ -119,11 +110,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Generate a simple QR code image as Base64 string
-     * This creates a visual QR code that can be displayed or printed
-     * Note: In production, you'd use a proper QR code library like ZXing
-     */
+
     public String generateQRCodeImage(String qrData, int width, int height) {
         try {
             // Create a simple visual representation
@@ -180,9 +167,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Validate QR code format and integrity
-     */
+
     public boolean isValidQRCode(String qrCodeData) {
         try {
             decodeQRCode(qrCodeData);
@@ -192,9 +177,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Generate security hash for QR code validation
-     */
+
     private String generateSecurityHash(String data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -205,9 +188,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Get QR code expiry time (if needed for additional security)
-     */
+
     public boolean isQRCodeExpired(String qrCodeData, long expiryHours) {
         try {
             Map<String, Object> vehicleInfo = getVehicleInfoFromQR(qrCodeData);

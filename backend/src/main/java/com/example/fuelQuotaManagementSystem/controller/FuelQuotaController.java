@@ -54,9 +54,9 @@ public class FuelQuotaController {
     @Autowired
     private NotificationService notificationService;
 
-    /**
-     * Check fuel quota for a vehicle by QR code scan (Mobile App - Station Operators)
-     */
+
+     //Check fuel quota for a vehicle by QR code scan (Mobile App - Station Operators)
+
     @GetMapping("/quota/scan/{qrData}")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> checkQuotaByQR(@PathVariable String qrData) {
@@ -116,9 +116,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Check fuel quota by vehicle ID (Web Portal - Vehicle Owners)
-     */
+
+     //Check fuel quota by vehicle ID (Web Portal - Vehicle Owners)
+
     @GetMapping("/quota/vehicle/{vehicleId}")
     @PreAuthorize("hasRole('VEHICLE_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> checkQuotaByVehicleId(@PathVariable Long vehicleId, Authentication authentication) {
@@ -168,9 +168,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Record fuel pumping transaction (Mobile App - Station Operators)
-     */
+
+     //Record fuel pumping transaction
+
     @PostMapping("/pump")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> recordFuelPump(@Valid @RequestBody FuelPumpRequest request,
@@ -286,9 +286,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Get fuel transaction history for a vehicle (Vehicle Owner)
-     */
+
+     //Get fuel transaction history for a vehicle (Vehicle Owner)
+
     @GetMapping("/transactions/vehicle/{vehicleId}")
     @PreAuthorize("hasRole('VEHICLE_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getVehicleTransactions(@PathVariable Long vehicleId, Authentication authentication) {
@@ -323,9 +323,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Get all transactions for a fuel station (Station Owner)
-     */
+
+     //Get all transactions for a fuel station (Station Owner)
+
     @GetMapping("/transactions/station/{stationId}")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getStationTransactions(@PathVariable Long stationId, Authentication authentication) {
@@ -347,9 +347,7 @@ public class FuelQuotaController {
                         .body(new MessageResponse("Access denied: You don't own this fuel station!"));
             }
 
-            List<FuelTransaction> transactions = fuelTransactionRepository.findAll().stream()
-                    .filter(t -> t.getStation().getId().equals(stationId))
-                    .collect(Collectors.toList());
+            List<FuelTransaction> transactions = fuelTransactionRepository.findByStationIdOrderByTimestampDesc(stationId);
 
             return ResponseEntity.ok(transactions.stream()
                     .map(this::convertToTransactionResponse)
@@ -361,9 +359,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Reset vehicle quota (Admin only - for testing)
-     */
+
+     //Reset vehicle quota (Admin only - for testing)
+
     @PostMapping("/quota/reset/{vehicleId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> resetVehicleQuota(@PathVariable Long vehicleId) {
@@ -384,9 +382,9 @@ public class FuelQuotaController {
         }
     }
 
-    /**
-     * Helper method to convert FuelTransaction to response DTO
-     */
+
+     //Helper method to convert FuelTransaction to response DTO
+
     private Object convertToTransactionResponse(FuelTransaction transaction) {
         return new Object() {
             public final Long id = transaction.getId();
@@ -401,9 +399,9 @@ public class FuelQuotaController {
         };
     }
 
-    /**
-     * Helper method to format timestamp
-     */
+
+     //Helper method to format timestamp
+
     private String formatTimestamp(Long timestamp) {
         if (timestamp == null) return null;
         return LocalDateTime.ofInstant(

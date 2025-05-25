@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,9 +27,9 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    /**
-     * Get current user profile
-     */
+
+     //Get current user profile
+
     @GetMapping("/profile")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN') or hasRole('STATION_OWNER') or hasRole('VEHICLE_OWNER')")
     public ResponseEntity<?> getCurrentUserProfile(Authentication authentication) {
@@ -43,18 +44,20 @@ public class UserController {
 
             User user = userOptional.get();
 
-            // Convert Role enum to String with "ROLE_" prefix to match frontend expectations
+            // Since Role enum already contains ROLE_ prefix, just convert to string
+            Set<String> roleStrings = user.getRoles().stream()
+                    .map(Role::name) // This gives us "ROLE_ADMIN", "ROLE_VEHICLE_OWNER", etc.
+                    .collect(Collectors.toSet());
+
             UserProfileResponse response = new UserProfileResponse(
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
                     user.getFullName(),
                     user.getPhoneNumber(),
-                    user.getRoles().stream()
-                            .map(role -> "ROLE_" + role.name())
-                            .collect(Collectors.toSet()),
+                    roleStrings,
                     user.getCreatedAt(),
-                    user.getUpdatedAt() // Using updatedAt as lastLoginAt since User entity doesn't have lastLoginAt
+                    user.getUpdatedAt()
             );
 
             return ResponseEntity.ok(response);
@@ -64,9 +67,9 @@ public class UserController {
         }
     }
 
-    /**
-     * Update user profile
-     */
+
+     //Update user profile
+
     @PutMapping("/profile")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN') or hasRole('STATION_OWNER') or hasRole('VEHICLE_OWNER')")
     public ResponseEntity<?> updateUserProfile(@Valid @RequestBody UserProfileUpdateRequest request,
@@ -103,9 +106,9 @@ public class UserController {
         }
     }
 
-    /**
-     * Change password
-     */
+
+     //Change password
+
     @PutMapping("/profile/password")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN') or hasRole('STATION_OWNER') or hasRole('VEHICLE_OWNER')")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request,

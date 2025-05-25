@@ -3,12 +3,15 @@ package com.example.fuelQuotaManagementSystem.service;
 import com.example.fuelQuotaManagementSystem.entity.FuelQuota;
 import com.example.fuelQuotaManagementSystem.entity.Vehicle;
 import com.example.fuelQuotaManagementSystem.repository.FuelQuotaRepository;
+import com.example.fuelQuotaManagementSystem.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,19 +20,126 @@ public class FuelQuotaService {
     @Autowired
     private FuelQuotaRepository fuelQuotaRepository;
 
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     // Default monthly quota allocations (in liters)
-    private static final double PETROL_CAR_QUOTA = 60.0;           // 60L per month for cars
-    private static final double PETROL_MOTORCYCLE_QUOTA = 20.0;    // 20L per month for motorcycles
-    private static final double PETROL_THREE_WHEELER_QUOTA = 40.0; // 40L per month for three wheelers
-    private static final double DIESEL_CAR_QUOTA = 80.0;           // 80L per month for diesel cars
-    private static final double DIESEL_COMMERCIAL_QUOTA = 200.0;   // 200L per month for buses/lorries
+    private static final double PETROL_CAR_QUOTA = 60.0;
+    private static final double PETROL_MOTORCYCLE_QUOTA = 20.0;
+    private static final double PETROL_THREE_WHEELER_QUOTA = 40.0;
+    private static final double DIESEL_CAR_QUOTA = 80.0;
+    private static final double DIESEL_COMMERCIAL_QUOTA = 200.0;
+
+    // Low quota warning thresholds (percentage)
+    private static final double LOW_QUOTA_THRESHOLD_PERCENTAGE = 20.0;
+    private static final double CRITICAL_QUOTA_THRESHOLD_PERCENTAGE = 10.0;
 
     /**
-     * Get current active fuel quota for a vehicle
-     * If no active quota exists or current quota is expired, create a new one
+     * AUTOMATIC QUOTA RESET - Runs on 1st of every month at 12:01 AM
+     * FOR TESTING: Change to "0 * * * * ?" to run every minute
+     * FOR PRODUCTION: Use "0 1 0 1 * ?" to run 1st of month at 12:01 AM
      */
+//    @Scheduled(cron = "0 * * * * ?") //for testing
+    @Scheduled(cron = "0 1 0 1 * ?") //for production
+    public void automaticMonthlyQuotaReset() {
+        LocalDate today = LocalDate.now();
+
+        // FOR TESTING: Run every minute
+        System.out.println("=== TESTING QUOTA RESET - " + java.time.LocalDateTime.now() + " ===");
+
+        // FOR PRODUCTION: Only run on 1st of month
+        // if (today.getDayOfMonth() != 1) {
+        //     return; // Exit if not 1st day of month
+        // }
+
+        System.out.println("=== STARTING AUTOMATIC MONTHLY QUOTA RESET ===");
+        System.out.println("Date: " + today);
+
+        try {
+            List<Vehicle> allVehicles = vehicleRepository.findAll();
+            int successCount = 0;
+            int failCount = 0;
+
+            for (Vehicle vehicle : allVehicles) {
+                try {
+                    // Reset quota for this vehicle
+                    automaticMonthlyReset(vehicle, vehicle.getFuelType());
+                    successCount++;
+
+                    System.out.println("Reset quota for: " + vehicle.getRegistrationNumber());
+
+                } catch (Exception e) {
+                    failCount++;
+                    System.err.println("Failed to reset quota for: " + vehicle.getRegistrationNumber() +
+                            " - Error: " + e.getMessage());
+                }
+            }
+
+            System.out.println("=== AUTOMATIC RESET COMPLETED ===");
+            System.out.println("Total vehicles: " + allVehicles.size());
+            System.out.println("Successfully reset: " + successCount);
+            System.out.println("Failed: " + failCount);
+
+        } catch (Exception e) {
+            System.err.println("ERROR in automatic quota reset: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Automatic monthly quota reset for a single vehicle
+     */
+    private FuelQuota automaticMonthlyReset(Vehicle vehicle, String fuelType) {
+        try {
+            // Get current month boundaries
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
+
+            long startTimestamp = startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            long endTimestamp = endOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+            // Find and delete any existing quota
+            Optional<FuelQuota> existingQuota = fuelQuotaRepository
+                    .findByVehicleAndFuelTypeAndEndDateGreaterThanEqual(vehicle, fuelType, System.currentTimeMillis());
+
+            if (existingQuota.isPresent()) {
+                fuelQuotaRepository.delete(existingQuota.get());
+                System.out.println("Deleted old quota for: " + vehicle.getRegistrationNumber());
+            }
+
+            // Create fresh quota for the new month
+            FuelQuota newQuota = createNewMonthlyQuota(vehicle, fuelType, startTimestamp, endTimestamp);
+
+            // ✅ SEND SMS TO VEHICLE OWNER ONLY (No admin SMS)
+            try {
+                boolean smsSuccess = notificationService.sendNewQuotaAllocationNotification(
+                        vehicle.getOwner().getPhoneNumber(),
+                        vehicle.getOwner().getEmail(),
+                        vehicle.getRegistrationNumber(),
+                        newQuota.getAllocatedQuota(),
+                        now.getMonth().toString() + " " + now.getYear()
+                );
+
+                System.out.println("SMS sent to " + vehicle.getRegistrationNumber() + ": " + smsSuccess);
+
+            } catch (Exception e) {
+                System.err.println("Failed to send SMS to: " + vehicle.getRegistrationNumber());
+            }
+
+            return newQuota;
+
+        } catch (Exception e) {
+            System.err.println("Error in automatic reset for: " + vehicle.getRegistrationNumber());
+            throw new RuntimeException("Automatic reset failed: " + e.getMessage());
+        }
+    }
+    
+
     public FuelQuota getCurrentQuota(Vehicle vehicle, String fuelType) {
-        // Get current month boundaries
         LocalDate now = LocalDate.now();
         LocalDate startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth());
         LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
@@ -37,28 +147,19 @@ public class FuelQuotaService {
         long startTimestamp = startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        // Try to find existing quota for current month
         Optional<FuelQuota> existingQuota = fuelQuotaRepository
                 .findByVehicleAndFuelTypeAndEndDateGreaterThanEqual(vehicle, fuelType, System.currentTimeMillis());
 
         if (existingQuota.isPresent()) {
             FuelQuota quota = existingQuota.get();
-
-            // Check if this quota is for current month
             if (quota.getStartDate() >= startTimestamp && quota.getStartDate() <= endTimestamp) {
                 return quota;
             }
-
-            // If quota exists but for different month, it's expired, create new one
         }
 
-        // Create new quota for current month
         return createNewMonthlyQuota(vehicle, fuelType, startTimestamp, endTimestamp);
     }
 
-    /**
-     * Create a new monthly fuel quota for a vehicle
-     */
     private FuelQuota createNewMonthlyQuota(Vehicle vehicle, String fuelType, long startDate, long endDate) {
         FuelQuota quota = new FuelQuota();
         quota.setVehicle(vehicle);
@@ -67,87 +168,116 @@ public class FuelQuotaService {
         quota.setStartDate(startDate);
         quota.setEndDate(endDate);
 
-        // Calculate allocated quota based on vehicle type and fuel type
         double allocatedQuota = calculateQuotaAllocation(vehicle.getVehicleType(), fuelType, vehicle.getEngineCapacity());
         quota.setAllocatedQuota(allocatedQuota);
-        quota.setRemainingQuota(allocatedQuota); // Initially, remaining = allocated
+        quota.setRemainingQuota(allocatedQuota);
 
         return fuelQuotaRepository.save(quota);
     }
 
-    /**
-     * Calculate quota allocation based on vehicle type and fuel type
-     */
     private double calculateQuotaAllocation(String vehicleType, String fuelType, Double engineCapacity) {
         if ("Petrol".equalsIgnoreCase(fuelType)) {
             switch (vehicleType.toLowerCase()) {
                 case "car":
-                    // Additional quota for larger engines
                     if (engineCapacity != null && engineCapacity > 1800) {
-                        return PETROL_CAR_QUOTA + 20.0; // 80L for cars > 1800cc
+                        return PETROL_CAR_QUOTA + 20.0;
                     }
                     return PETROL_CAR_QUOTA;
-
                 case "motorcycle":
                     return PETROL_MOTORCYCLE_QUOTA;
-
                 case "three wheeler":
                     return PETROL_THREE_WHEELER_QUOTA;
-
                 default:
-                    return PETROL_CAR_QUOTA; // Default to car quota
+                    return PETROL_CAR_QUOTA;
             }
         } else if ("Diesel".equalsIgnoreCase(fuelType)) {
             switch (vehicleType.toLowerCase()) {
                 case "car":
                     return DIESEL_CAR_QUOTA;
-
                 case "bus":
                 case "lorry":
                     return DIESEL_COMMERCIAL_QUOTA;
-
                 default:
-                    return DIESEL_CAR_QUOTA; // Default to car quota
+                    return DIESEL_CAR_QUOTA;
             }
         }
-
-        return PETROL_CAR_QUOTA; // Default fallback
+        return PETROL_CAR_QUOTA;
     }
 
-    /**
-     * Deduct fuel from quota when fuel is pumped
-     */
     public boolean deductFuel(Vehicle vehicle, String fuelType, double amountLiters) {
         FuelQuota quota = getCurrentQuota(vehicle, fuelType);
 
         if (quota.getRemainingQuota() >= amountLiters) {
+            double quotaBeforeDeduction = quota.getRemainingQuota();
             quota.setRemainingQuota(quota.getRemainingQuota() - amountLiters);
             fuelQuotaRepository.save(quota);
+
+            checkAndSendLowQuotaWarning(vehicle, quota, quotaBeforeDeduction);
             return true;
         }
-
-        return false; // Insufficient quota
+        return false;
     }
 
-    /**
-     * Check if vehicle has sufficient quota for requested amount
-     */
+    private void checkAndSendLowQuotaWarning(Vehicle vehicle, FuelQuota quota, double quotaBeforeDeduction) {
+        double remainingQuota = quota.getRemainingQuota();
+        double allocatedQuota = quota.getAllocatedQuota();
+        double remainingPercentage = (remainingQuota / allocatedQuota) * 100;
+        double previousPercentage = (quotaBeforeDeduction / allocatedQuota) * 100;
+
+        if (remainingPercentage <= CRITICAL_QUOTA_THRESHOLD_PERCENTAGE &&
+                previousPercentage > CRITICAL_QUOTA_THRESHOLD_PERCENTAGE) {
+
+            sendCriticalQuotaWarning(vehicle, remainingQuota, quota.getFuelType());
+        }
+        else if (remainingPercentage <= LOW_QUOTA_THRESHOLD_PERCENTAGE &&
+                previousPercentage > LOW_QUOTA_THRESHOLD_PERCENTAGE) {
+
+            sendLowQuotaWarning(vehicle, remainingQuota, quota.getFuelType());
+        }
+    }
+
+    private boolean sendLowQuotaWarning(Vehicle vehicle, double remainingQuota, String fuelType) {
+        try {
+            return notificationService.sendLowQuotaWarning(
+                    vehicle.getOwner().getPhoneNumber(),
+                    vehicle.getOwner().getEmail(),
+                    vehicle.getRegistrationNumber(),
+                    remainingQuota,
+                    fuelType,
+                    LOW_QUOTA_THRESHOLD_PERCENTAGE
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send low quota warning: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean sendCriticalQuotaWarning(Vehicle vehicle, double remainingQuota, String fuelType) {
+        try {
+            return notificationService.sendLowQuotaWarning(
+                    vehicle.getOwner().getPhoneNumber(),
+                    vehicle.getOwner().getEmail(),
+                    vehicle.getRegistrationNumber(),
+                    remainingQuota,
+                    fuelType,
+                    CRITICAL_QUOTA_THRESHOLD_PERCENTAGE
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send critical quota warning: " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean hasSufficientQuota(Vehicle vehicle, String fuelType, double requestedAmount) {
         FuelQuota quota = getCurrentQuota(vehicle, fuelType);
         return quota.getRemainingQuota() >= requestedAmount;
     }
 
-    /**
-     * Get remaining quota for a vehicle
-     */
     public double getRemainingQuota(Vehicle vehicle, String fuelType) {
         FuelQuota quota = getCurrentQuota(vehicle, fuelType);
         return quota.getRemainingQuota();
     }
 
-    /**
-     * Get quota information with details
-     */
     public FuelQuotaInfo getQuotaInfo(Vehicle vehicle, String fuelType) {
         FuelQuota quota = getCurrentQuota(vehicle, fuelType);
 
@@ -155,7 +285,7 @@ public class FuelQuotaService {
                 quota.getId(),
                 quota.getAllocatedQuota(),
                 quota.getRemainingQuota(),
-                quota.getAllocatedQuota() - quota.getRemainingQuota(), // used quota
+                quota.getAllocatedQuota() - quota.getRemainingQuota(),
                 quota.getStartDate(),
                 quota.getEndDate(),
                 isQuotaExpiringSoon(quota),
@@ -163,55 +293,55 @@ public class FuelQuotaService {
         );
     }
 
-    /**
-     * Check if quota is expiring soon (within 3 days)
-     */
+    public FuelQuota resetQuota(Vehicle vehicle, String fuelType) {
+        try {
+            Optional<FuelQuota> existingQuota = fuelQuotaRepository
+                    .findByVehicleAndFuelTypeAndEndDateGreaterThanEqual(vehicle, fuelType, System.currentTimeMillis());
+
+            if (existingQuota.isPresent()) {
+                fuelQuotaRepository.delete(existingQuota.get());
+            }
+
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
+
+            long startTimestamp = startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            long endTimestamp = endOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+            FuelQuota newQuota = createNewMonthlyQuota(vehicle, fuelType, startTimestamp, endTimestamp);
+
+            try {
+                notificationService.sendNewQuotaAllocationNotification(
+                        vehicle.getOwner().getPhoneNumber(),
+                        vehicle.getOwner().getEmail(),
+                        vehicle.getRegistrationNumber(),
+                        newQuota.getAllocatedQuota(),
+                        now.getMonth().toString() + " " + now.getYear()
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to send quota reset SMS: " + e.getMessage());
+            }
+
+            return newQuota;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to reset quota: " + e.getMessage());
+        }
+    }
+
     private boolean isQuotaExpiringSoon(FuelQuota quota) {
         long threeDaysInMillis = 3 * 24 * 60 * 60 * 1000L;
         long currentTime = System.currentTimeMillis();
         return (quota.getEndDate() - currentTime) <= threeDaysInMillis;
     }
 
-    /**
-     * Calculate quota usage percentage
-     */
     private double getQuotaUsagePercentage(FuelQuota quota) {
         if (quota.getAllocatedQuota() == 0) return 0;
         double usedQuota = quota.getAllocatedQuota() - quota.getRemainingQuota();
         return (usedQuota / quota.getAllocatedQuota()) * 100;
     }
 
-    /**
-     * Reset quota for testing purposes (Admin only)
-     */
-    public FuelQuota resetQuota(Vehicle vehicle, String fuelType) {
-        LocalDate now = LocalDate.now();
-        LocalDate startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth());
-        LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-        long startTimestamp = startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        long endTimestamp = endOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-
-        return createNewMonthlyQuota(vehicle, fuelType, startTimestamp, endTimestamp);
-    }
-
-    /**
-     * Check if it's a new month and create new quotas if needed
-     * This should be called by a scheduled job
-     */
-    public void processMonthlyQuotaRenewal() {
-        // This method would be called by a scheduled task
-        // to automatically create new quotas at the start of each month
-        // Implementation would fetch all vehicles and create new quotas
-
-        LocalDate now = LocalDate.now();
-        if (now.getDayOfMonth() == 1) {
-            // First day of month - renewal logic here
-            System.out.println("Processing monthly quota renewal for: " + now.getMonth() + " " + now.getYear());
-        }
-    }
-
-    // Inner class for quota information response
     public static class FuelQuotaInfo {
         private Long quotaId;
         private double allocatedQuota;

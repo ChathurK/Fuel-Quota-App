@@ -18,12 +18,7 @@ public class MotorTrafficService {
         initializeMockData();
     }
 
-    /**
-     * Validate vehicle details against DMT database
-     * @param registrationNumber Vehicle registration number
-     * @param chassisNumber Vehicle chassis number
-     * @return DMTVehicleInfo if valid, empty if invalid
-     */
+
     public Optional<DMTVehicleInfo> validateVehicle(String registrationNumber, String chassisNumber) {
         DMTVehicleInfo vehicleInfo = dmtDatabase.get(registrationNumber.toUpperCase());
 
@@ -34,16 +29,12 @@ public class MotorTrafficService {
         return Optional.empty();
     }
 
-    /**
-     * Check if vehicle registration number exists in DMT
-     */
+
     public boolean isValidRegistrationNumber(String registrationNumber) {
         return dmtDatabase.containsKey(registrationNumber.toUpperCase());
     }
 
-    /**
-     * Get vehicle info by registration number only
-     */
+
     public Optional<DMTVehicleInfo> getVehicleInfo(String registrationNumber) {
         return Optional.ofNullable(dmtDatabase.get(registrationNumber.toUpperCase()));
     }

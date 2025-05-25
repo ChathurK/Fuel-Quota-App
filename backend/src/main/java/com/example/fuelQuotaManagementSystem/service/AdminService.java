@@ -36,9 +36,9 @@ public class AdminService {
     @Autowired
     private FuelQuotaService fuelQuotaService;
 
-    /**
-     * Generate comprehensive admin dashboard
-     */
+
+     //Generate comprehensive admin dashboard
+
     public AdminDashboardResponse getSystemDashboard() {
         // Get all data
         List<User> allUsers = userRepository.findAll();
@@ -134,16 +134,16 @@ public class AdminService {
         );
     }
 
-    /**
-     * Get all users in the system
-     */
+
+     //Get all users in the system
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    /**
-     * Get users by role
-     */
+
+     //Get users by role
+
     public List<User> getUsersByRole(String role) {
         Role roleEnum;
         switch (role.toLowerCase()) {
@@ -165,17 +165,17 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get user by ID
-     */
+
+     //Get user by ID
+
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
     }
 
-    /**
-     * Update user roles
-     */
+
+     //Update user roles
+
     public User updateUserRoles(Long userId, Set<String> roles) {
         User user = getUserById(userId);
 
@@ -200,10 +200,7 @@ public class AdminService {
         return userRepository.save(user);
     }
 
-    /**
-     * Update user status (activate/deactivate)
-     * Note: You might need to add an 'active' field to User entity
-     */
+
     public void updateUserStatus(Long userId, boolean active) {
         User user = getUserById(userId);
         // For now, we'll just verify the user exists
@@ -211,9 +208,7 @@ public class AdminService {
         System.out.println("User " + user.getUsername() + " status updated to: " + (active ? "Active" : "Inactive"));
     }
 
-    /**
-     * Generate fuel consumption report
-     */
+
     public Object getFuelConsumptionReport(LocalDate startDate, LocalDate endDate, String fuelType) {
         long startTimestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -266,9 +261,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Generate quota utilization report
-     */
+
     public Object getQuotaUtilizationReport(String month) {
         List<FuelQuota> quotas = fuelQuotaRepository.findAll();
 
@@ -305,9 +298,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Generate vehicle registration report
-     */
+
     public Object getVehicleRegistrationReport(LocalDate startDate, LocalDate endDate) {
         long startTimestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -346,9 +337,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Generate station performance report
-     */
+
     public Object getStationPerformanceReport(LocalDate startDate, LocalDate endDate) {
         long startTimestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -397,9 +386,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Bulk allocate quotas
-     */
+
     public int bulkAllocateQuotas(String vehicleType, String fuelType, Double quotaAmount, String period) {
         List<Vehicle> vehicles = vehicleRepository.findAll();
 
@@ -431,9 +418,7 @@ public class AdminService {
         return affectedVehicles;
     }
 
-    /**
-     * Reset all quotas (Emergency function)
-     */
+
     public int resetAllQuotas() {
         List<Vehicle> allVehicles = vehicleRepository.findAll();
         int resetCount = 0;
@@ -450,9 +435,7 @@ public class AdminService {
         return resetCount;
     }
 
-    /**
-     * Get system health status
-     */
+
     public Object getSystemHealthStatus() {
         boolean dbConnected = true; // In real app, test database connection
         boolean notificationServiceUp = true; // In real app, test notification service
@@ -477,9 +460,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Get notification statistics
-     */
+
     public Object getNotificationStatistics() {
         List<FuelTransaction> allTransactions = fuelTransactionRepository.findAll();
         List<FuelTransaction> todayTransactions = getTodayTransactions();
@@ -500,9 +481,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Export transaction data
-     */
+
     public String exportTransactionData(LocalDate startDate, LocalDate endDate, String format) {
         long startTimestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -534,9 +513,7 @@ public class AdminService {
         return "Export format not supported";
     }
 
-    /**
-     * Get top fuel consumers
-     */
+
     public Object getTopFuelConsumers(int limit, String period) {
         List<FuelTransaction> transactions = fuelTransactionRepository.findAll();
 
@@ -598,9 +575,7 @@ public class AdminService {
         return topConsumers;
     }
 
-    /**
-     * Get system usage trends
-     */
+
     public Object getSystemUsageTrends(LocalDate startDate, LocalDate endDate, String groupBy) {
         long startTimestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endTimestamp = endDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -644,9 +619,7 @@ public class AdminService {
         return trends;
     }
 
-    /**
-     * Get database statistics
-     */
+
     public Object getDatabaseStatistics() {
         return new Object() {
             public final Long totalUsers = (long) userRepository.findAll().size();
@@ -662,9 +635,7 @@ public class AdminService {
         };
     }
 
-    /**
-     * Trigger database backup
-     */
+
     public String triggerDatabaseBackup(String backupType) {
         // In a real implementation, this would trigger actual backup processes
         String backupId = "BACKUP_" + System.currentTimeMillis();
@@ -672,9 +643,7 @@ public class AdminService {
         return backupId;
     }
 
-    /**
-     * Helper method to get today's transactions
-     */
+
     private List<FuelTransaction> getTodayTransactions() {
         LocalDate today = LocalDate.now();
         long startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();

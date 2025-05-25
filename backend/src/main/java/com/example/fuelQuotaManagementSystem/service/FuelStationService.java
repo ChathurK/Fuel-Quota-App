@@ -25,9 +25,7 @@ public class FuelStationService {
     @Autowired
     private FuelTransactionRepository fuelTransactionRepository;
 
-    /**
-     * Register a new fuel station
-     */
+
     public FuelStation registerStation(FuelStationRegistrationRequest request, User owner) {
         // Validate registration number format
         if (!isValidStationRegistrationNumber(request.getRegistrationNumber())) {
@@ -59,23 +57,17 @@ public class FuelStationService {
         return fuelStationRepository.save(station);
     }
 
-    /**
-     * Get all stations owned by a specific user
-     */
+
     public List<FuelStation> getStationsByOwner(Long ownerId) {
         return fuelStationRepository.findByOwnerId(ownerId);
     }
 
-    /**
-     * Get all fuel stations (Admin function)
-     */
+
     public List<FuelStation> getAllStations() {
         return fuelStationRepository.findAll();
     }
 
-    /**
-     * Get station by ID with ownership validation
-     */
+
     public FuelStation getStationById(Long stationId, Long userId, boolean isAdmin) {
         Optional<FuelStation> stationOptional = fuelStationRepository.findById(stationId);
 
@@ -93,9 +85,7 @@ public class FuelStationService {
         return station;
     }
 
-    /**
-     * Update fuel station information
-     */
+
     public FuelStation updateStation(Long stationId, FuelStationRegistrationRequest request, Long userId, boolean isAdmin) {
         FuelStation station = getStationById(stationId, userId, isAdmin);
 
@@ -115,9 +105,7 @@ public class FuelStationService {
         return fuelStationRepository.save(station);
     }
 
-    /**
-     * Activate or deactivate a fuel station (Admin only)
-     */
+
     public FuelStation updateStationStatus(Long stationId, boolean active) {
         Optional<FuelStation> stationOptional = fuelStationRepository.findById(stationId);
 
@@ -131,9 +119,7 @@ public class FuelStationService {
         return fuelStationRepository.save(station);
     }
 
-    /**
-     * Find nearby active fuel stations by city
-     */
+
     public List<FuelStation> findNearbyStations(String city) {
         return fuelStationRepository.findAll().stream()
                 .filter(station -> station.isActive() &&
@@ -142,9 +128,7 @@ public class FuelStationService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Find stations by fuel type availability
-     */
+
     public List<FuelStation> findStationsByFuelType(String city, String fuelType) {
         return findNearbyStations(city).stream()
                 .filter(station -> {
@@ -159,9 +143,7 @@ public class FuelStationService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Generate station dashboard with statistics
-     */
+
     public StationDashboardResponse getStationDashboard(Long stationId, Long userId, boolean isAdmin) {
         FuelStation station = getStationById(stationId, userId, isAdmin);
 
@@ -232,9 +214,7 @@ public class FuelStationService {
         return dashboard;
     }
 
-    /**
-     * Get station transaction statistics for a date range
-     */
+
     public Object getStationStatistics(Long stationId, LocalDate startDate, LocalDate endDate, Long userId, boolean isAdmin) {
         FuelStation station = getStationById(stationId, userId, isAdmin);
 
@@ -270,17 +250,13 @@ public class FuelStationService {
         };
     }
 
-    /**
-     * Check if station exists and is active
-     */
+
     public boolean isStationActiveAndExists(Long stationId) {
         Optional<FuelStation> stationOptional = fuelStationRepository.findById(stationId);
         return stationOptional.isPresent() && stationOptional.get().isActive();
     }
 
-    /**
-     * Check if station supports specific fuel type
-     */
+
     public boolean stationSupportsFuelType(Long stationId, String fuelType) {
         Optional<FuelStation> stationOptional = fuelStationRepository.findById(stationId);
 
@@ -299,17 +275,13 @@ public class FuelStationService {
         return false;
     }
 
-    /**
-     * Validate Sri Lankan fuel station registration number format
-     */
+
     private boolean isValidStationRegistrationNumber(String regNumber) {
         // Sri Lankan fuel station format: SR-XXXX-YYYY (e.g., SR-COL-0001, SR-GAL-0005)
         return regNumber != null && regNumber.matches("^SR-[A-Z]{3}-\\d{4}$");
     }
 
-    /**
-     * Get station count by city (for analytics)
-     */
+
     public Object getStationCountByCity() {
         List<FuelStation> allStations = fuelStationRepository.findAll();
 
@@ -320,9 +292,7 @@ public class FuelStationService {
                 ));
     }
 
-    /**
-     * Get active vs inactive station count
-     */
+
     public Object getStationStatusSummary() {
         List<FuelStation> allStations = fuelStationRepository.findAll();
 

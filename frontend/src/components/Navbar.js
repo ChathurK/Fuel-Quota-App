@@ -1,5 +1,5 @@
-// src/components/Navbar.js (Corrected routes)
-import React, { useState } from 'react';
+// SOLUTION 1: Use React state instead of direct AuthService call
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Box,
@@ -22,18 +22,30 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const currentUser = AuthService.getCurrentUser();
+  const location = useLocation();
+  
+  // ✅ USE STATE FOR CURRENT USER (instead of direct AuthService call)
+  const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser());
   
   // Mobile menu state
   const [mobileOpen, setMobileOpen] = useState(false);
   
   // User menu state
   const [anchorElUser, setAnchorElUser] = useState(null);
+  
+  // Loading state for logout
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // ✅ UPDATE USER STATE ON LOCATION CHANGE
+  useEffect(() => {
+    const user = AuthService.getCurrentUser();
+    setCurrentUser(user);
+  }, [location.pathname]); // Re-check user when route changes
 
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
@@ -47,10 +59,36 @@ const Navbar = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleLogout = () => {
-    AuthService.logout();
-    navigate('/login');
-    handleCloseUserMenu();
+  // ✅ IMPROVED LOGOUT WITH STATE UPDATE
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
+    try {
+      setIsLoggingOut(true);
+      
+      // Close any open menus first
+      handleCloseUserMenu();
+      setMobileOpen(false);
+      
+      // Clear authentication
+      AuthService.logout();
+      
+      // ✅ IMMEDIATELY UPDATE LOCAL STATE
+      setCurrentUser(null);
+      
+      // Navigate to login
+      navigate('/login', { replace: true });
+      
+      setIsLoggingOut(false);
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+      
+      // Force state update even on error
+      setCurrentUser(null);
+      navigate('/login', { replace: true });
+    }
   };
 
   // Get user's primary role for display
@@ -74,14 +112,13 @@ const Navbar = () => {
       pages.push({ title: 'Reports', path: '/admin/reports' });
     } else if (currentUser.roles.includes('ROLE_STATION_OWNER')) {
       pages.push({ title: 'Dashboard', path: '/station' });
-      pages.push({ title: 'My Stations', path: '/stations' }); // ✅ Fixed route
-      pages.push({ title: 'QR Scanner', path: '/qr-scanner' }); // ✅ Fixed route
-      pages.push({ title: 'Transactions', path: '/transactions' }); // ✅ Fixed route
+      pages.push({ title: 'My Stations', path: '/stations' });
+      pages.push({ title: 'QR Scanner', path: '/qr-scanner' });
+      pages.push({ title: 'Transactions', path: '/transactions' });
     } else if (currentUser.roles.includes('ROLE_VEHICLE_OWNER')) {
       pages.push({ title: 'Dashboard', path: '/vehicle' });
       pages.push({ title: 'My Vehicles', path: '/vehicle/list' });
       pages.push({ title: 'Add Vehicle', path: '/vehicle/add' });
-      
     }
   }
 
@@ -130,8 +167,14 @@ const Navbar = () => {
           <>
             <Divider />
             <ListItem disablePadding>
-              <ListItemButton onClick={handleLogout} sx={{ textAlign: 'center' }}>
-                <ListItemText primary="Logout" />
+              <ListItemButton 
+                onClick={handleLogout} 
+                sx={{ textAlign: 'center' }}
+                disabled={isLoggingOut}
+              >
+                <ListItemText 
+                  primary={isLoggingOut ? "Logging out..." : "Logout"} 
+                />
               </ListItemButton>
             </ListItem>
           </>
@@ -321,8 +364,15 @@ const Navbar = () => {
                     >
                       <Typography>Profile Settings</Typography>
                     </MenuItem>
-                    <MenuItem onClick={handleLogout}>
-                      <Typography color="error">Logout</Typography>
+                    
+                    {/* Logout menu item */}
+                    <MenuItem 
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      <Typography color="error">
+                        {isLoggingOut ? "Logging out..." : "Logout"}
+                      </Typography>
                     </MenuItem>
                   </Menu>
                 </>

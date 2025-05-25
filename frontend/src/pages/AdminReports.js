@@ -607,8 +607,7 @@ const AdminReports = () => {
                 <TableCell>Type</TableCell>
                 <TableCell>Owner</TableCell>
                 <TableCell align="right">Total Fuel</TableCell>
-                <TableCell align="right">Transactions</TableCell>
-                <TableCell align="right">Avg per Transaction</TableCell>
+                
                 <TableCell>Last Transaction</TableCell>
               </TableRow>
             </TableHead>
@@ -638,10 +637,7 @@ const AdminReports = () => {
                       {FormatUtils.formatFuelAmount(consumer.totalFuelConsumed)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">{consumer.transactionCount}</TableCell>
-                  <TableCell align="right">
-                    {FormatUtils.formatFuelAmount(consumer.averagePerTransaction)}
-                  </TableCell>
+                  
                   <TableCell>{consumer.lastTransactionDate}</TableCell>
                 </TableRow>
               ))}

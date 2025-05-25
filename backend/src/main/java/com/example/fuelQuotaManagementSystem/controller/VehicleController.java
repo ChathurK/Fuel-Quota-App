@@ -39,9 +39,9 @@ public class VehicleController {
     @Autowired
     private QRCodeService qrCodeService;
 
-    /**
-     * Register a new vehicle (Vehicle Owner only)
-     */
+
+     //Register a new vehicle (Vehicle Owner only)
+
     @PostMapping("/register")
     @PreAuthorize("hasRole('VEHICLE_OWNER')")
     public ResponseEntity<?> registerVehicle(@Valid @RequestBody VehicleRegistrationRequest request,
@@ -117,9 +117,9 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Get all vehicles for current user (Vehicle Owner only)
-     */
+
+     //Get all vehicles for current user (Vehicle Owner only)
+
     @GetMapping("/my-vehicles")
     @PreAuthorize("hasRole('VEHICLE_OWNER')")
     public ResponseEntity<?> getMyVehicles(Authentication authentication) {
@@ -138,9 +138,9 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Scan QR code and get vehicle details (For mobile app - Station owners/operators)
-     */
+
+     //Scan QR code and get vehicle details (For mobile app - Station owners/operators)
+
     @GetMapping("/scan/{qrData}")
     @PreAuthorize("hasRole('STATION_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> scanVehicleQR(@PathVariable String qrData) {
@@ -174,9 +174,9 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Get vehicle details by ID (Admin only)
-     */
+
+     //Get vehicle details by ID (Admin only)
+
     @GetMapping("/{vehicleId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getVehicleById(@PathVariable Long vehicleId) {
@@ -196,9 +196,9 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Get all vehicles (Admin only)
-     */
+
+     //Get all vehicles (Admin only)
+
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllVehicles() {
@@ -216,9 +216,9 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Validate vehicle without registration (Public endpoint for checking)
-     */
+
+     //Validate vehicle without registration
+
     @PostMapping("/validate")
     public ResponseEntity<?> validateVehicle(@Valid @RequestBody VehicleRegistrationRequest request) {
         try {
@@ -240,20 +240,34 @@ public class VehicleController {
         }
     }
 
-    /**
-     * Helper method to convert Vehicle entity to VehicleResponse DTO
-     */
+
+     //Helper method to convert Vehicle entity to VehicleResponse DTO
+
     private VehicleResponse convertToVehicleResponse(Vehicle vehicle) {
-        return new VehicleResponse(
-                vehicle.getId(),
-                vehicle.getRegistrationNumber(),
-                vehicle.getVehicleType(),
-                vehicle.getFuelType(),
-                vehicle.getEngineCapacity(),
-                null, // Make - will be filled from DMT if needed
-                null, // Model - will be filled from DMT if needed
-                null, // Year - will be filled from DMT if needed
-                "Active"
-        );
+        VehicleResponse response = new VehicleResponse();
+
+        // Vehicle basic info
+        response.setId(vehicle.getId());
+        response.setRegistrationNumber(vehicle.getRegistrationNumber());
+        response.setVehicleType(vehicle.getVehicleType());
+        response.setFuelType(vehicle.getFuelType());
+        response.setEngineCapacity(vehicle.getEngineCapacity());
+        response.setStatus("Active");
+        response.setCreatedAt(vehicle.getCreatedAt());
+        response.setUpdatedAt(vehicle.getUpdatedAt());
+
+        // Owner information
+        if (vehicle.getOwner() != null) {
+            response.setOwnerName(vehicle.getOwner().getFullName());
+            response.setOwnerEmail(vehicle.getOwner().getEmail());
+            response.setOwnerPhone(vehicle.getOwner().getPhoneNumber());
+        }
+
+
+        response.setMake(null);
+        response.setModel(null);
+        response.setYear(null);
+
+        return response;
     }
 }

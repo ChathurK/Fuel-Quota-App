@@ -31,9 +31,9 @@ public class AdminController {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Get admin dashboard with system overview
-     */
+
+    //Get admin dashboard with system overview
+
     @GetMapping("/dashboard")
     public ResponseEntity<?> getAdminDashboard() {
         try {
@@ -45,9 +45,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get all users in the system
-     */
+
+     //Get all users in the system
+
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers(@RequestParam(required = false) String role) {
         try {
@@ -70,9 +70,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get user details by ID
-     */
+
+     //Get user details by ID
+
     @GetMapping("/users/{userId}")
     public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         try {
@@ -87,9 +87,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Update user roles
-     */
+
+     //Update user roles
+
     @PutMapping("/users/{userId}/roles")
     public ResponseEntity<?> updateUserRoles(@PathVariable Long userId,
                                              @RequestBody Set<String> roles) {
@@ -105,9 +105,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Activate or deactivate user account
-     */
+
+     //Activate or deactivate user account
+
     @PutMapping("/users/{userId}/status")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long userId,
                                               @RequestParam boolean active) {
@@ -124,9 +124,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get system-wide fuel consumption report
-     */
+
+     //Get system-wide fuel consumption report
+
     @GetMapping("/reports/fuel-consumption")
     public ResponseEntity<?> getFuelConsumptionReport(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -140,9 +140,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get monthly quota utilization report
-     */
+
+     //Get monthly quota utilization report
+
     @GetMapping("/reports/quota-utilization")
     public ResponseEntity<?> getQuotaUtilizationReport(@RequestParam(required = false) String month) {
         try {
@@ -154,9 +154,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get vehicle registration trends
-     */
+
+     //Get vehicle registration trends
+
     @GetMapping("/reports/vehicle-registrations")
     public ResponseEntity<?> getVehicleRegistrationReport(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -169,9 +169,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get fuel station performance report
-     */
+
+     //Get fuel station performance report
+
     @GetMapping("/reports/station-performance")
     public ResponseEntity<?> getStationPerformanceReport(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                                          @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -184,9 +184,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Bulk allocate quotas for all vehicles
-     */
+
+     //Bulk allocate quotas for all vehicles
+
     @PostMapping("/quota/bulk-allocate")
     public ResponseEntity<?> bulkAllocateQuotas(@RequestParam String vehicleType,
                                                 @RequestParam String fuelType,
@@ -201,9 +201,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Reset all quotas for current month (Emergency function)
-     */
+
+     //Reset all quotas for current month (Emergency function)
+
     @PostMapping("/quota/reset-all")
     public ResponseEntity<?> resetAllQuotas(@RequestParam(required = false) String confirmationCode) {
         try {
@@ -221,9 +221,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get system health status
-     */
+
+     //Get system health status
+
     @GetMapping("/system/health")
     public ResponseEntity<?> getSystemHealth() {
         try {
@@ -235,9 +235,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get notification system status and statistics
-     */
+
+     //Get notification system status and statistics
+
     @GetMapping("/system/notifications")
     public ResponseEntity<?> getNotificationStatus() {
         try {
@@ -249,9 +249,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Export system data (CSV format)
-     */
+
+     //Export system data (CSV format)
+
     @GetMapping("/export/transactions")
     public ResponseEntity<?> exportTransactionData(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -269,9 +269,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get top fuel-consuming vehicles
-     */
+
+     //Get top fuel-consuming vehicles
+
     @GetMapping("/analytics/top-consumers")
     public ResponseEntity<?> getTopFuelConsumers(@RequestParam(defaultValue = "10") int limit,
                                                  @RequestParam(required = false) String period) {
@@ -284,9 +284,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get system usage trends
-     */
+
+     //Get system usage trends
+
     @GetMapping("/analytics/usage-trends")
     public ResponseEntity<?> getUsageTrends(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -300,9 +300,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Get database statistics
-     */
+
+     //Get database statistics
+
     @GetMapping("/system/database-stats")
     public ResponseEntity<?> getDatabaseStatistics() {
         try {
@@ -314,9 +314,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Backup database (trigger backup process)
-     */
+
+     //Backup database (trigger backup process)
+
     @PostMapping("/system/backup")
     public ResponseEntity<?> triggerBackup(@RequestParam(required = false) String backupType) {
         try {
@@ -328,9 +328,9 @@ public class AdminController {
         }
     }
 
-    /**
-     * Helper method to convert User entity to UserManagementResponse DTO
-     */
+
+     //Helper method to convert User entity to UserManagementResponse DTO
+
     private UserManagementResponse convertToUserResponse(User user) {
         return new UserManagementResponse(
                 user.getId(),
