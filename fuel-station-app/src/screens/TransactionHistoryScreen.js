@@ -11,6 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../services/ApiService';
+import TransactionService from '../services/TransactionService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/Colors';
 
@@ -25,12 +26,13 @@ const TransactionHistoryScreen = ({ navigation }) => {
 
   const loadTransactions = async () => {
     try {
-      const stationId = await AsyncStorage.getItem('stationId');
-      if (!stationId) {
-        throw new Error('Station ID not found. Please login again.');
-      }
-      
-      const data = await ApiService.getStationTransactions(stationId);
+      setLoading(true);
+      console.log('Loading transaction history...');
+
+      // Fetch transaction history from the service
+      const data = await TransactionService.getTransactionHistory();
+      console.log('Transaction history loaded:', data);
+
       setTransactions(data || []);
     } catch (error) {
       console.error('Failed to load transactions:', error);

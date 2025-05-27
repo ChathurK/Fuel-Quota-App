@@ -1,4 +1,5 @@
 import ApiService from './ApiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TransactionService = {
   processTransaction: async (transactionData) => {
@@ -20,53 +21,27 @@ const TransactionService = {
     }
   },
 
+  // Fetch transaction history for the logged-in station
   getTransactionHistory: async () => {
     try {
-      const response = await ApiService.getTransactionHistory();
-      
-      if (response.success) {
-        return response.transactions || [];
+      const stationId = await AsyncStorage.getItem('stationId');
+      console.log('TransactionService: Retrieved stationId for history:', stationId);
+
+      if (!stationId) {
+        throw new Error('Station ID not found. Please login again.');
+      }
+
+      const response = await ApiService.getStationTransactions(stationId);
+      console.log('TransactionService: getTransactionHistory response:', response);
+
+      if (Array.isArray(response) && response.length > 0) {
+        return response;
       } else {
         throw new Error(response.message || 'Failed to load transactions');
       }
     } catch (error) {
       console.error('Get transaction history error:', error);
-      // Return mock data for development
-      return this.getMockTransactionHistory();
     }
-  },
-
-  // Mock data for development/testing
-  getMockTransactionHistory: () => {
-    return [
-      {
-        id: 1,
-        vehicleNumber: 'ABC-1234',
-        ownerName: 'John Doe',
-        liters: 25.5,
-        totalAmount: 3060.00,
-        status: 'Completed',
-        timestamp: '2024-05-24T09:30:00Z',
-      },
-      {
-        id: 2,
-        vehicleNumber: 'XYZ-5678',
-        ownerName: 'Jane Smith',
-        liters: 40.0,
-        totalAmount: 4800.00,
-        status: 'Completed',
-        timestamp: '2024-05-24T08:15:00Z',
-      },
-      {
-        id: 3,
-        vehicleNumber: 'DEF-9012',
-        ownerName: 'Bob Johnson',
-        liters: 15.2,
-        totalAmount: 1824.00,
-        status: 'Completed',
-        timestamp: '2024-05-24T07:45:00Z',
-      },
-    ];
   },
 };
 

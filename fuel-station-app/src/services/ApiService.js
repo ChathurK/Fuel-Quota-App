@@ -66,6 +66,7 @@ const ApiService = {
     return response.data;
   },
 
+  // Get transaction history for a station ✅
   getStationTransactions: async (stationId) => {
     const response = await apiClient.get(`/fuel/transactions/station/${stationId}`);
     return response.data;
