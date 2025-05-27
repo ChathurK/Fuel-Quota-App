@@ -6,7 +6,7 @@ const StationService = {
   getStationInfo: async () => {
     try {
       const stationId = await AsyncStorage.getItem('stationId');
-      console.log('StationService: Retrieved stationId from storage:', stationId);
+      console.log('StationService: Retrieved stationId for info:', stationId);
       
       if (!stationId) {
         throw new Error('Station ID not found. Please login again.');
@@ -33,7 +33,7 @@ const StationService = {
       }
     } catch (error) {
       console.error('Get station info error:', error);
-      // Return mock data for development
+      // Return mock data
       return StationService.getMockStationInfo();
     }
   },
@@ -53,21 +53,26 @@ const StationService = {
       
       if (response && typeof response === 'object') {
         return {
-          totalTransactions: response.todayTransactionCount || response.todayTransactions || 0,
-          totalLiters: response.todayFuelDispensed || (response.todayPetrolDispensed + response.todayDieselDispensed) || 0,
-          totalRevenue: response.todayRevenue || 0,
+          todayDieselDispensed: response.todayDieselDispensed || 0,
+          todayPetrolDispensed: response.todayPetrolDispensed || 0,
+          todayTotalDispensed: response.todayTotalDispensed || 0,
+          todayTransactionCount: response.todayTransactionCount || 0,
+          totalDieselDispensed: response.totalDieselDispensed || 0,
+          totalPetrolDispensed: response.totalPetrolDispensed || 0,
+          totalFuelDispensed: response.totalFuelDispensed || 0,
+          totalTransactionCount: response.totalTransactionCount || 0
         };
       } else {
         throw new Error(response.message || 'Failed to load today stats');
       }
     } catch (error) {
       console.error('Get today stats error:', error);
-      // Return mock data for development
+      // Return mock data
       return StationService.getMockTodayStats();
     }
   },
 
-  // Mock data for development/testing
+  // Mock data
   getMockStationInfo: () => {
     return {
       id: 1,
@@ -84,11 +89,14 @@ const StationService = {
 
   getMockTodayStats: () => {
     return {
-      totalTransactions: 25,
-      totalLiters: 1250.5,
-      totalRevenue: 150060.00,
-      averageTransactionSize: 50.02,
-      peakHour: '08:00 AM - 09:00 AM',
+      todayDieselDispensed: 0.0,
+      todayPetrolDispensed: 0.0,
+      todayTotalDispensed: 0.0,
+      todayTransactionCount: 0,
+      totalDieselDispensed: 0.0,
+      totalPetrolDispensed: 0.0,
+      totalFuelDispensed: 0.0,
+      totalTransactionCount: 0,
     };
   },
 };

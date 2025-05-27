@@ -16,7 +16,7 @@ import ApiService from '../services/ApiService';
 import StationService from '../services/StationService';
 
 const HomeScreen = ({ navigation }) => {
-  const [stationInfo, setStationInfo] = useState({ 
+  const [stationInfo, setStationInfo] = useState({
     name: 'Fuel Station',
     ownerName: 'Owner',
     address: 'Loading...',
@@ -36,7 +36,7 @@ const HomeScreen = ({ navigation }) => {
     loadStationInfo();
     loadTodayStats();
   }, []);
-  
+
   const loadStationInfo = async () => {
     try {
       setLoading(true);
@@ -44,6 +44,7 @@ const HomeScreen = ({ navigation }) => {
 
       // Fetch station info from StationService
       const stationData = await StationService.getStationInfo();
+      console.log('Station data received'); 
 
       if (stationData) {
         setStationInfo({
@@ -74,16 +75,6 @@ const HomeScreen = ({ navigation }) => {
           }
         ]
       );
-      
-      // Keep existing data or set fallback
-      setStationInfo(prev => ({
-        ...prev,
-        status: 'Unable to load',
-        fuelTypes: 'Unable to load',
-        address: 'Unable to load',
-        phone: 'Unable to load',
-        registrationNumber: 'Unable to load'
-      }));
     } finally {
       setLoading(false);
     }
@@ -92,33 +83,19 @@ const HomeScreen = ({ navigation }) => {
   const loadTodayStats = async () => {
     try {
       console.log('Loading today\'s statistics...');
-      
-      // Get station ID from AsyncStorage
-      const stationId = await AsyncStorage.getItem('stationId');
-      
-      if (!stationId) {
-        console.error('No station ID found for stats');
-        return;
-      }
 
-      // Fetch today's stats from API
-      const statsData = await ApiService.getTodayStats(stationId);
-      console.log('Stats data received:', statsData);
-      
+      // Fetch today's stats from StationService
+      const statsData = await StationService.getTodayStats();
+      console.log('Stats data received');
+
       if (statsData) {
         setTodayStats({
-          transactions: statsData.todayTransactionCount || statsData.todayTransactions || 0,
-          fuelDispensed: statsData.todayFuelDispensed || 
-                         (statsData.todayPetrolDispensed + statsData.todayDieselDispensed) || 0
+          transactions: statsData.todayTransactionCount,
+          fuelDispensed: statsData.todayTotalDispensed
         });
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
-      // Keep existing stats or set to 0
-      setTodayStats({
-        transactions: 0,
-        fuelDispensed: 0
-      });
     }
   };
 

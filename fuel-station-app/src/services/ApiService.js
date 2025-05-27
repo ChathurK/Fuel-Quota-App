@@ -77,6 +77,7 @@ const ApiService = {
     return response.data;
   },
 
+  // Get station info by ID ✅
   getStationInfo: async (stationId) => {
     const response = await apiClient.get(`/station/${stationId}`);
     return response.data;
@@ -88,7 +89,7 @@ const ApiService = {
     return response.data;
   },
 
-  // Get today's stats for a station 
+  // Get today's stats for a station ✅
   getTodayStats: async (stationId) => {
     const response = await apiClient.get(`/station/${stationId}/dashboard`);
     return response.data;
