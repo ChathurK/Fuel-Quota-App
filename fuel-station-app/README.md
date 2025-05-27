@@ -1,5 +1,17 @@
 # Fuel Station App Setup
 
+## About
+
+The Fuel Station App is a React Native mobile application built with Expo, designed specifically for fuel station operators (owners). This app allows station owners to:
+
+- **Scan Vehicle QR Codes**: Quickly verify fuel quotas and eligibility
+- **Process Fuel Transactions**: Record fuel dispensing with real-time quota updates
+- **View Transaction History**: Monitor daily sales and fuel distribution
+- **View Station Information**: View station details and operational status
+- **Dashboard Analytics**: View today's performance metrics and statistics
+
+The app provides a streamlined interface for fuel station operations, integrating with the backend system to ensure accurate quota management and transaction recording.
+
 ## Quick Start
 
 1. **Clone the repository and navigate to the fuel-station-app folder:**
@@ -29,7 +41,6 @@
 ## Configuration
 
 - **Backend API**: Update `src/services/ApiService.js` with your server URL
-- **SMS Service**: Configure `src/services/SMSService.js` if using SMS notifications
 
 ## Requirements
 
