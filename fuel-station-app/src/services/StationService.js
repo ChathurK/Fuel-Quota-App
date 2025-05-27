@@ -1,7 +1,9 @@
 import ApiService from './ApiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const StationService = {  getStationInfo: async () => {
+const StationService = {
+  // Fetch station info
+  getStationInfo: async () => {
     try {
       const stationId = await AsyncStorage.getItem('stationId');
       console.log('StationService: Retrieved stationId from storage:', stationId);
@@ -10,17 +12,20 @@ const StationService = {  getStationInfo: async () => {
         throw new Error('Station ID not found. Please login again.');
       }
       
-      const response = await ApiService.getStationDashboard(stationId);
+      // Fetch station data from API
+      const response = await ApiService.getStationInfo(stationId);
       console.log('StationService: getStationInfo response:', response);
       
-      if (response && (response.stationName || response.stationId)) {
-        // Extract station info from dashboard response
+      if (response && (response.name || response.id)) {
+        // Extract station info from response
         return {
-          id: response.stationId,
-          name: response.stationName,
+          id: response.id,
+          name: response.name,
+          ownerName: response.ownerName,
           address: response.address,
-          phone: response.phone || 'N/A',
-          operatorName: response.operatorName || 'Station Manager',
+          phone: response.contactNumber,
+          status: response.status,
+          fuelTypes: (response.hasPetrol ? (response.hasDiesel ? 'Petrol, Diesel' : 'Petrol') : (stationData.hasDiesel ? 'Diesel' : 'Not available')),
           registrationNumber: response.registrationNumber,
         };
       } else {
@@ -33,6 +38,7 @@ const StationService = {  getStationInfo: async () => {
     }
   },
 
+  // Fetch today's stats for the station
   getTodayStats: async () => {
     try {
       const stationId = await AsyncStorage.getItem('stationId');
@@ -65,12 +71,14 @@ const StationService = {  getStationInfo: async () => {
   getMockStationInfo: () => {
     return {
       id: 1,
-      name: 'City Fuel Station',
-      address: '123 Main Street, Colombo 07',
-      phone: '+94112345678',
-      operatorName: 'Station Manager',
-      licenseNumber: 'FS001234',
-      operatingHours: '06:00 AM - 10:00 PM',
+      name: 'Mock Fuel Station',
+      ownerName: 'Mock Station Manager',
+      address: 'Mock address',
+      contactNumber: 'Mock number',
+      status: 'Mock status',
+      hasPetrol: false,
+      hasDiesel: false,
+      registrationNumber: 'Mock reg no',
     };
   },
 

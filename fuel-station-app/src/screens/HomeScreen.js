@@ -35,33 +35,24 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     loadStationInfo();
     loadTodayStats();
-  }, []);  const loadStationInfo = async () => {
+  }, []);
+  
+  const loadStationInfo = async () => {
     try {
       setLoading(true);
       console.log('Loading station information...');
-      
-      // Get station ID from AsyncStorage
-      const stationId = await AsyncStorage.getItem('stationId');
-      console.log('Retrieved stationId:', stationId);
-      
-      if (!stationId) {
-        console.error('No station ID found in storage');
-        Alert.alert('Error', 'Station ID not found. Please login again.');
-        return;
-      }
 
-      // Fetch station info from API
-      const stationData = await ApiService.getStationInfo(stationId);
-      console.log('Station data received:', stationData);
-      
+      // Fetch station info from StationService
+      const stationData = await StationService.getStationInfo();
+
       if (stationData) {
         setStationInfo({
-          name: stationData.name || stationData.stationName || 'Fuel Station',
-          ownerName: stationData.ownerName || stationData.operatorName || 'Station Owner',
-          address: stationData.address || 'Address not available',
-          phone: stationData.phone || stationData.contactNumber || 'Contact not available',
-          status: stationData.status || 'Active',
+          ownerName: stationData.ownerName || 'Station Owner',
+          name: stationData.name || 'Fuel Station',
+          status: stationData.status,
           fuelTypes: stationData.fuelTypes || 'Petrol, Diesel',
+          address: stationData.address || 'Address not available',
+          phone: stationData.phone || 'Contact not available',
           registrationNumber: stationData.registrationNumber || 'Not available'
         });
       } else {
@@ -90,12 +81,14 @@ const HomeScreen = ({ navigation }) => {
         status: 'Unable to load',
         fuelTypes: 'Unable to load',
         address: 'Unable to load',
-        phone: 'Unable to load'
+        phone: 'Unable to load',
+        registrationNumber: 'Unable to load'
       }));
     } finally {
       setLoading(false);
     }
   };
+
   const loadTodayStats = async () => {
     try {
       console.log('Loading today\'s statistics...');
@@ -319,7 +312,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
 
           {/* Registration Number */}
-          {stationInfo.registrationNumber && stationInfo.registrationNumber !== 'Not available' && (
+          {stationInfo.registrationNumber && (
             <View style={styles.infoRow}>
               <MaterialIcons
                 name="assignment"

@@ -37,23 +37,19 @@ public class FuelQuotaService {
     private static final double LOW_QUOTA_THRESHOLD_PERCENTAGE = 20.0;
     private static final double CRITICAL_QUOTA_THRESHOLD_PERCENTAGE = 10.0;
 
-    /**
-     * AUTOMATIC QUOTA RESET - Runs on 1st of every month at 12:01 AM
-     * FOR TESTING: Change to "0 * * * * ?" to run every minute
-     * FOR PRODUCTION: Use "0 1 0 1 * ?" to run 1st of month at 12:01 AM
-     */
-//    @Scheduled(cron = "0 * * * * ?") //for testing
-    @Scheduled(cron = "0 1 0 1 * ?") //for production
+
+//    @Scheduled(cron = "0 * * * * ?") //to run every minute for testing
+    @Scheduled(cron = "0 1 0 1 * ?") //to run on 1st of month for production
     public void automaticMonthlyQuotaReset() {
         LocalDate today = LocalDate.now();
 
         // FOR TESTING: Run every minute
         System.out.println("=== TESTING QUOTA RESET - " + java.time.LocalDateTime.now() + " ===");
 
-        // FOR PRODUCTION: Only run on 1st of month
-        // if (today.getDayOfMonth() != 1) {
-        //     return; // Exit if not 1st day of month
-        // }
+        // Only run on 1st of month exit if not the 1st
+        if (today.getDayOfMonth() != 1) {
+            return; 
+        }
 
         System.out.println("=== STARTING AUTOMATIC MONTHLY QUOTA RESET ===");
         System.out.println("Date: " + today);
